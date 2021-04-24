@@ -2,6 +2,11 @@ package models
 
 type Member struct {
 	Person        `json:"person"`
+type MemberResponse struct {
+	Status  int      `json:"Status"`
+	Message string   `json:"Message"`
+	Data    []Member `json:"Data"`
+
 	IdMember      int     `json:"idMember" gorm:"primaryKey"`
 	NamaLengkap   string  `json:"namaLengkap"`
 	TanggalLahir  string  `json:"tanggalLahir"`
@@ -10,4 +15,5 @@ type Member struct {
 	StatusAkun    string  `json:"statusAkun"`
 	NoKartuKredit string  `json:"noKartuKredit" gorm:"type:varchar(191)"`
 	History       History `gorm:"foreignKey:IdMember"`
+
 }
