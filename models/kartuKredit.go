@@ -4,4 +4,5 @@ type KartuKredit struct {
 	NoKartuKredit string `json:"noKartuKredit"`
 	MasaBerlaku   string `json:"masaBerlaku"`
 	CVC           string `json:"cvc"`
+	Member        Member `gorm:"foreignKey:NoKartuKredit"`
 }

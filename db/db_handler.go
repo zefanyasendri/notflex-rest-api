@@ -28,5 +28,16 @@ func ConnectDB() *gorm.DB {
 	} else {
 		fmt.Println("Connect Success")
 	}
+
+
+	db.AutoMigrate(&models.Person{})
+	db.AutoMigrate(&models.Member{})
+	db.AutoMigrate(&models.KartuKredit{})
+	db.AutoMigrate(&models.Genre{})
+	db.AutoMigrate(&models.Film{})
+	db.AutoMigrate(&models.History{})
+	db.AutoMigrate(&models.Pemain{})
+	db.AutoMigrate(&models.ListPemain{})
+
 	return db
 }
