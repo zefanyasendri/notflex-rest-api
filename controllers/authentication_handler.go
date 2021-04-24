@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/TugasKelompok-REST-API-NotFlex/models"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
 
 var jwtKey = []byte("bebasapasaja")
