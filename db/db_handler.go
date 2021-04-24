@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -28,7 +29,6 @@ func ConnectDB() *gorm.DB {
 	} else {
 		fmt.Println("Connect Success")
 	}
-
 
 	db.AutoMigrate(&models.Person{})
 	db.AutoMigrate(&models.Member{})
