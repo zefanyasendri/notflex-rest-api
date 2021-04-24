@@ -10,42 +10,24 @@ import (
 )
 
 func LoginAdmin(w http.ResponseWriter, r *http.Request) {
-	db := database.Connect()
-	defer db.Close()
+	db := database.ConnectDB()
 
 	pass := r.URL.Query()["password"]
 	email := r.URL.Query()["email"]
-
-	query := "SELECT * FROM person"
-	if email != nil && pass != nil {
-		query += " WHERE password ='" + pass[0] + "' and email = '" + email[0] + "'"
-	}
-
-	rows, err := db.Query(query)
-
-	if err != nil {
-		log.Print(err)
-	}
-
 	var person models.Person
-	var persons []models.Person
-	for rows.Next() {
-		if err := rows.Scan(&person.Email, &person.Password); err != nil {
-			log.Print(err.Error())
-		} else {
-			persons = append(persons, person)
-		}
-	}
-
 	var response models.PersonResponse
-	if err == nil {
-		generateToken(w, person.Email, person.Password, 0)
-		response.Status = 200
-		response.Message = "Success Login <WELCOME>"
-	} else {
+
+	if err := db.Where("email = ? and password = ?", email[0], pass[0]).First(&person).Error; err != nil {
+		log.Print(err)
 		response.Status = 400
 		response.Message = "Error"
+		return
 	}
+
+	db.Find(&person)
+	generateToken(w, person.Email, person.Password, 0)
+	response.Status = 200
+	response.Message = "Success Login <WELCOME>"
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)

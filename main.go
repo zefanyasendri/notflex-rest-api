@@ -5,13 +5,14 @@ import (
 	"log"
 	"net/http"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/controllers"
+	db "github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
 )
 
 func main() {
+	db.ConnectDB()
 	router := mux.NewRouter()
 
 	router.HandleFunc("/login", controllers.LoginAdmin).Methods("GET")
