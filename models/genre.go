@@ -1,7 +1,6 @@
 package models
 
 type Genre struct {
-	IdGenre    int    `json:"idGenre" gorm:"primaryKey"`
+	IdGenre    int    `json:"idGenre"`
 	JenisGenre string `json:"jenisGenre"`
-	Film       Film   `gorm:"foreignKey:IdGenre"`
 }
