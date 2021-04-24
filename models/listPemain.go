@@ -1,7 +1,9 @@
 package models
 
 type ListPemain struct {
-	IdPemain int    `json:"idPemain"`
-	IdFilm   int    `json:"idFilm"`
+
+	IdPemain int    `json:"idPemain" gorm:"primaryKey"`
+	IdFilm   int    `json:"idFilm" gorm:"primaryKey"`
+
 	Peran    string `json:"peran"`
 }
