@@ -2,7 +2,7 @@ package models
 
 type Person struct {
 	Email    string `json:"email"`
-	Password string
+	Password string `json:"password"`
 }
 
 type PersonResponse struct {
