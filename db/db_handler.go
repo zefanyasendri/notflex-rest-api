@@ -26,12 +26,13 @@ func ConnectDB() *gorm.DB {
 	}
 
 	db.AutoMigrate(&models.Person{})
-	db.AutoMigrate(&models.Film{})
-	db.AutoMigrate(&models.Genre{})
-	db.AutoMigrate(&models.ListPemain{})
-	db.AutoMigrate(&models.KartuKredit{})
 	db.AutoMigrate(&models.Member{})
+	db.AutoMigrate(&models.KartuKredit{})
+	db.AutoMigrate(&models.Genre{})
+	db.AutoMigrate(&models.Film{})
 	db.AutoMigrate(&models.History{})
 	db.AutoMigrate(&models.Pemain{})
+	db.AutoMigrate(&models.ListPemain{})
+
 	return db
 }
