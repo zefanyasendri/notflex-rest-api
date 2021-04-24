@@ -6,17 +6,17 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/TugasKelompok-REST-API-NotFlex/models"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
 
 var jwtKey = []byte("bebasapasaja")
 var tokenName = "token"
 
 type Claims struct {
-	Email    string `json: "email"`
-	Password string `json: "password"`
-	UserType int    `json: user_type`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	UserType int    `json:"user_type"`
 	jwt.StandardClaims
 }
 
