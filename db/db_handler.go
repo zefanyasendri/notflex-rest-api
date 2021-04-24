@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
-	models "github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -14,6 +14,8 @@ func Connect() *sql.DB {
 	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/db_tubes_notflex?parseTime=true&loc=Asia%2FJakarta")
 	if err != nil {
 		log.Fatal(err)
+	} else {
+		fmt.Println("Connect Success")
 	}
 	return db
 }
@@ -23,15 +25,8 @@ func ConnectDB() *gorm.DB {
 
 	if err != nil {
 		panic("Connection Failed")
+	} else {
+		fmt.Println("Connect Success")
 	}
-
-	db.AutoMigrate(&models.Person{})
-	db.AutoMigrate(&models.Film{})
-	db.AutoMigrate(&models.Genre{})
-	db.AutoMigrate(&models.ListPemain{})
-	db.AutoMigrate(&models.KartuKredit{})
-	db.AutoMigrate(&models.Member{})
-	db.AutoMigrate(&models.History{})
-	db.AutoMigrate(&models.Pemain{})
 	return db
 }
