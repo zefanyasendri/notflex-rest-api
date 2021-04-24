@@ -1,8 +1,7 @@
 package models
 
 type History struct {
-	IdMember      int    `json:"idMember" gorm:"primaryKey"`
+	IdMember      int    `json:"idMember"`
 	IdFilm        int    `json:"idFilm"`
 	TanggalNonton string `json:"tanggalNonton"`
-	Member        Member `gorm:"foreignKey:IdMember"`
 }
