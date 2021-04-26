@@ -17,6 +17,7 @@ func main() {
 
 	router.HandleFunc("/login", controllers.LoginAdmin).Methods("GET")
 	router.HandleFunc("/getuserbyemail", controllers.Authenticate(controllers.GetMemberBaseOnEmail, 0)).Methods("GET")
+	router.HandleFunc("/updateprofile/{id}", controllers.UpdateProfile).Methods("PUT")
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
