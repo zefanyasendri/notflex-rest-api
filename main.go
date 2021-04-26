@@ -21,6 +21,8 @@ func main() {
 	router.HandleFunc("/addfilm",controllers.AddFilm).Methods("POST")
 	router.HandleFunc("/updatefilmbyid/{id}",controllers.UpdateFilmById).Methods("PUT")
 	router.HandleFunc("/getfilmbykeyword/{keyword}",controllers.GetFilmByKeyword).Methods("GET")
+	router.HandleFunc("/updateprofile/{id}", controllers.UpdateProfile).Methods("PUT")
+
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
