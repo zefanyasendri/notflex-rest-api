@@ -1,7 +1,8 @@
 package models
 
 type Member struct {
-	Person        `json:"person"`
+	Email         string  `json:"email"`
+	Password      string  `json:"password"`
 	IdMember      int     `json:"idMember" gorm:"primaryKey"`
 	NamaLengkap   string  `json:"namaLengkap"`
 	TanggalLahir  string  `json:"tanggalLahir"`

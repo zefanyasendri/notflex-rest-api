@@ -14,8 +14,11 @@ import (
 func main() {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/login", controllers.LoginAdmin).Methods("GET")
+	router.HandleFunc("/loginasadminbroo", controllers.LoginAdmin).Methods("GET")
+	router.HandleFunc("/login", controllers.LoginMember).Methods("GET")
 	router.HandleFunc("/getuserbyemail", controllers.Authenticate(controllers.GetMemberBaseOnEmail, 0)).Methods("GET")
+	router.HandleFunc("/register", controllers.Register).Methods("POST")
+	router.HandleFunc("/logout", controllers.SignOut).Methods("GET")
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
