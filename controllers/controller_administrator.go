@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
+	"github.com/gorilla/mux"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
 
@@ -74,4 +76,130 @@ func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func SuspendMember(w http.ResponseWriter, r *http.Request) {
+	db := db.ConnectDB()
+
+	body, _ := ioutil.ReadAll(r.Body)
+
+	vars := mux.Vars(r)
+	idMember := vars["id"]
+
+	var memberUpdates models.Member
+	json.Unmarshal(body, &memberUpdates)
+
+	var member models.Member
+	db.Where("WHERE status_akun = ? AND id_member = ?", "Active", idMember).Find(&member)
+	db.Model(&member).Updates(memberUpdates)
+
+	response := models.FilmResponse{Status: 200, Data: member, Message: "Member account suspended"}
+	result, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	db.Save(&member)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(result)
+}
+
+func AddFilm(w http.ResponseWriter, r *http.Request) {
+	db := db.ConnectDB()
+
+	body, _ := ioutil.ReadAll(r.Body)
+
+	var film models.Film
+	json.Unmarshal(body, &film)
+
+	db.Create(&film)
+
+	response := models.FilmResponse{Status: 200, Data: film, Message: "Added Film"}
+	result, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	db.Save(&film)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(result)
+}
+
+func UpdateFilmById(w http.ResponseWriter, r *http.Request) {
+	db := db.ConnectDB()
+
+	body, _ := ioutil.ReadAll(r.Body)
+
+	vars := mux.Vars(r)
+	idFilm := vars["id"]
+
+	var filmUpdates models.Film
+	json.Unmarshal(body, &filmUpdates)
+
+	var film models.Film
+	db.Find(&film, idFilm)
+	db.Model(&film).Updates(filmUpdates)
+
+	response := models.FilmResponse{Status: 200, Data: film, Message: "Film Data Updated"}
+	result, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	db.Save(&film)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(result)
+
+}
+
+func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
+	db := database.ConnectDB()
+
+	vars := mux.Vars(r)
+	keyword := vars["keyword"]
+
+	var film []models.Film
+	db.Where("judul LIKE ?", "%"+keyword+"%").Find(&film)
+
+	response := models.FilmResponse{Status: 200, Data: film, Message: "Data Found"}
+	result, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(result)
+}
+
+func GetFilmByID(w http.ResponseWriter, r *http.Request) {
+	db := db.ConnectDB()
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	var film []models.Film
+	// db.Where("judul = ?", id).Find(&film)
+	db.First(&film, id)
+
+	response := models.FilmResponse{Status: 200, Data: film, Message: "Data Found"}
+	result, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(result)
 }

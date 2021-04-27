@@ -16,6 +16,12 @@ func main() {
 	router.HandleFunc("/login", controllers.LoginAdmin).Methods("GET")
 	router.HandleFunc("/loginmember", controllers.Login).Methods("GET")
 	router.HandleFunc("/getuserbyemail", controllers.Authenticate(controllers.GetMemberBaseOnEmail, 0)).Methods("GET")
+	router.HandleFunc("/suspend/{id}", controllers.SuspendMember).Methods("PUT")
+	router.HandleFunc("/addfilm", controllers.AddFilm).Methods("POST")
+	router.HandleFunc("/updatefilmbyid/{id}", controllers.UpdateFilmById).Methods("PUT")
+	router.HandleFunc("/getfilmbykeyword/{keyword}", controllers.GetFilmByKeyword).Methods("GET")
+	router.HandleFunc("/updateprofile/{id}", controllers.UpdateProfile).Methods("PUT")
+	router.HandleFunc("/getfilmbyid/{id}", controllers.GetFilmByID).Methods("GET")
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
