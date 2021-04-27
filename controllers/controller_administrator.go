@@ -5,15 +5,16 @@ import (
 	"log"
 	"net/http"
 
-	database "github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
+	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
 
 func LoginAdmin(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	pass := r.URL.Query()["password"]
 	email := r.URL.Query()["email"]
+
 	var person models.Person
 	var response models.PersonResponse
 
@@ -34,7 +35,7 @@ func LoginAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
-	db := database.Connect()
+	db := db.Connect()
 	defer db.Close()
 
 	email := r.URL.Query()["email"]
@@ -61,7 +62,7 @@ func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var response models.MemberResponse
+	var response models.Response
 	if err == nil {
 		response.Status = 200
 		response.Message = "Success"
