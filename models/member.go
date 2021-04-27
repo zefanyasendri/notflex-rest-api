@@ -13,7 +13,7 @@ type Member struct {
 }
 
 type MemberResponse struct {
-	Status  int      `json:"Status"`
-	Message string   `json:"Message"`
-	Data    []Member `json:"Data"`
+	Status  int         `json:"Status"`
+	Message string      `json:"Message"`
+	Data    interface{} `json:"Data"`
 }
