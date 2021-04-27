@@ -6,16 +6,17 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
 	"github.com/gorilla/mux"
-	database "github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
 
 func LoginAdmin(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	pass := r.URL.Query()["password"]
 	email := r.URL.Query()["email"]
+
 	var person models.Person
 	var response models.PersonResponse
 
@@ -36,7 +37,7 @@ func LoginAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
-	db := database.Connect()
+	db := db.Connect()
 	defer db.Close()
 
 	email := r.URL.Query()["email"]
@@ -63,7 +64,7 @@ func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var response models.MemberResponse
+	var response models.Response
 	if err == nil {
 		response.Status = 200
 		response.Message = "Success"
@@ -78,7 +79,7 @@ func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 func SuspendMember(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	body, _ := ioutil.ReadAll(r.Body)
 
@@ -107,7 +108,7 @@ func SuspendMember(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddFilm(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	body, _ := ioutil.ReadAll(r.Body)
 
@@ -131,7 +132,7 @@ func AddFilm(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateFilmById(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	body, _ := ioutil.ReadAll(r.Body)
 
@@ -182,7 +183,7 @@ func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetFilmByID(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	vars := mux.Vars(r)
 	id := vars["id"]
