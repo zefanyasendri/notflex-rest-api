@@ -25,10 +25,10 @@ func main() {
 	router.HandleFunc("/updateprofile/{id}", controllers.UpdateProfile).Methods("PUT")
 	router.HandleFunc("/getfilmbyid/{id}", controllers.GetFilmByID).Methods("GET")
 	router.HandleFunc("/getfilmbykeywords/{keywords}", controllers.GetFilmByKeywords).Methods("GET")
-	router.HandleFunc("/getwatchhistory/{id}", controllers.GetWatchHistory).Methods("GET")
+	router.HandleFunc("/getwatchhistory", controllers.Authenticate(controllers.GetWatchHistory, 1)).Methods("GET")
 
 	//Hilbert
-  router.HandleFunc("/loginmember", controllers.Login).Methods("GET")
+	router.HandleFunc("/loginmember", controllers.Login).Methods("GET")
 	router.HandleFunc("/watch/{id}", controllers.Authenticate(controllers.WatchFilm, 1)).Methods("GET")
 
 	corsHandler := cors.New(cors.Options{
@@ -37,6 +37,8 @@ func main() {
 		AllowCredentials: true,
 	})
 	handler := corsHandler.Handler(router)
+
+	fmt.Println(controllers.HashPassword("12345"))
 
 	http.Handle("/", handler)
 	fmt.Println("Connected to port 4321")
