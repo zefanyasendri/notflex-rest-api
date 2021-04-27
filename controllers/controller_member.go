@@ -290,8 +290,16 @@ func GetWatchHistory(w http.ResponseWriter, r *http.Request) {
 
 	db := db.ConnectDB()
 
-	vars := mux.Vars(r)
-	id_member := vars["id"]
+	//Validate from cookies
+	status, id_member, err := GetIDFromCookies(r)
+	if !status && err != nil {
+		json.NewEncoder(w).Encode(models.Response{
+			Status:  http.StatusInternalServerError,
+			Message: "Something went wrong please try again",
+			Data:    nil,
+		})
+		return
+	}
 
 	query, err := db.Table("films").Select("films.judul, histories.tanggal_nonton").Joins("LEFT JOIN histories ON histories.id_film = films.id_film LEFT JOIN members ON histories.id_member = members.id_member").Where("histories.id_member = ?", id_member).Rows()
 
