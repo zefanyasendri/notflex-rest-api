@@ -12,9 +12,9 @@ import (
 
 func main() {
 	router := mux.NewRouter()
-
 	router.HandleFunc("/login", controllers.LoginAdmin).Methods("GET")
 	router.HandleFunc("/loginmember", controllers.Login).Methods("GET")
+	router.HandleFunc("/watch/{id}", controllers.Authenticate(controllers.WatchFilm, 1)).Methods("GET")
 	router.HandleFunc("/getuserbyemail", controllers.Authenticate(controllers.GetMemberBaseOnEmail, 0)).Methods("GET")
 	router.HandleFunc("/suspend/{id}", controllers.SuspendMember).Methods("PUT")
 	router.HandleFunc("/addfilm", controllers.AddFilm).Methods("POST")
@@ -31,7 +31,6 @@ func main() {
 	handler := corsHandler.Handler(router)
 
 	http.Handle("/", handler)
-	fmt.Println(controllers.HashPassword("john"))
-	fmt.Println("Connected to port 8000")
-	log.Fatal(http.ListenAndServe(":8000", router))
+	fmt.Println("Connected to port 4321")
+	log.Fatal(http.ListenAndServe(":4321", router))
 }
