@@ -281,3 +281,41 @@ func GetFilmByKeywords(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(result)
 }
+
+func GetWatchHistory(w http.ResponseWriter, r *http.Request) {
+	type Response struct {
+		Judul string    `json:"judul"`
+		Waktu time.Time `json:"waktu"`
+	}
+
+	db := db.ConnectDB()
+
+	vars := mux.Vars(r)
+	id_member := vars["id"]
+
+	query, err := db.Table("films").Select("films.judul, histories.tanggal_nonton").Joins("LEFT JOIN histories ON histories.id_film = films.id_film LEFT JOIN members ON histories.id_member = members.id_member").Where("histories.id_member = ?", id_member).Rows()
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	defer query.Close()
+	var response Response
+	var responses []Response
+
+	for query.Next() {
+		query.Scan(&response.Judul, &response.Waktu)
+		responses = append(responses, response)
+	}
+
+	res := models.FilmResponse{Status: 200, Data: responses, Message: "Data Found"}
+	result, err := json.Marshal(res)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(result)
+}
