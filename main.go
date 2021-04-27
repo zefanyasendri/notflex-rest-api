@@ -8,14 +8,13 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/controllers"
-	db "github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
 )
 
 func main() {
-	db.ConnectDB()
 	router := mux.NewRouter()
 
 	router.HandleFunc("/login", controllers.LoginAdmin).Methods("GET")
+	router.HandleFunc("/loginmember", controllers.Login).Methods("GET")
 	router.HandleFunc("/getuserbyemail", controllers.Authenticate(controllers.GetMemberBaseOnEmail, 0)).Methods("GET")
 
 	corsHandler := cors.New(cors.Options{
@@ -26,6 +25,7 @@ func main() {
 	handler := corsHandler.Handler(router)
 
 	http.Handle("/", handler)
-	fmt.Println("Connected to port 4321")
-	log.Fatal(http.ListenAndServe(":4321", router))
+	fmt.Println(controllers.HashPassword("john"))
+	fmt.Println("Connected to port 8000")
+	log.Fatal(http.ListenAndServe(":8000", router))
 }

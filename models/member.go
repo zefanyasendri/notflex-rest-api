@@ -11,9 +11,3 @@ type Member struct {
 	NoKartuKredit string  `json:"noKartuKredit" gorm:"type:varchar(191)"`
 	History       History `gorm:"foreignKey:IdMember"`
 }
-
-type MemberResponse struct {
-	Status  int      `json:"Status"`
-	Message string   `json:"Message"`
-	Data    []Member `json:"Data"`
-}
