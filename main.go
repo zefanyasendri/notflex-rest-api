@@ -28,6 +28,7 @@ func main() {
 	router.HandleFunc("/updateprofile/{id}", controllers.UpdateProfile).Methods("PUT")
 	router.HandleFunc("/getfilmbyid/{id}", controllers.GetFilmByID).Methods("GET")
 	router.HandleFunc("/getfilmbykeywords/{keywords}", controllers.GetFilmByKeywords).Methods("GET")
+	router.HandleFunc("/getwatchhistory/{id}", controllers.GetWatchHistory).Methods("GET")
 
 	//Hilbert
 
