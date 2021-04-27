@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
 	"github.com/gorilla/mux"
+	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
 
@@ -162,7 +162,7 @@ func UpdateFilmById(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	vars := mux.Vars(r)
 	keyword := vars["keyword"]
