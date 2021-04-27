@@ -90,7 +90,7 @@ func SuspendMember(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(body, &memberUpdates)
 
 	var member models.Member
-	db.Where("WHERE status_akun = ? AND id_member = ?", "Active", idMember).Find(&member)
+	db.Where("status_akun = ? AND id_member = ?", "Active", idMember).Find(&member)
 	db.Model(&member).Updates(memberUpdates)
 
 	response := models.FilmResponse{Status: 200, Data: member, Message: "Member account suspended"}
