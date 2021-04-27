@@ -257,11 +257,11 @@ func GetIDFromCookies(r *http.Request) (bool, int, error) {
 	if err != nil && !parsedToken.Valid {
 		return false, -1, err
 	}
-	return true, accessClaims.UserID, nil\
+	return true, accessClaims.UserID, nil
 }
 
 func GetFilmByKeywords(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	vars := mux.Vars(r)
 	keywordfilm := vars["keywords"]
