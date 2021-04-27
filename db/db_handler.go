@@ -1,4 +1,4 @@
-package controllers
+package db
 
 import (
 	"database/sql"
@@ -30,7 +30,6 @@ func ConnectDB() *gorm.DB {
 		fmt.Println("Connect Success")
 	}
 
-	db.AutoMigrate(&models.Person{})
 	db.AutoMigrate(&models.Member{})
 	db.AutoMigrate(&models.KartuKredit{})
 	db.AutoMigrate(&models.Genre{})
