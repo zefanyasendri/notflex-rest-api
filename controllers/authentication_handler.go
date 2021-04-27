@@ -16,16 +16,18 @@ var tokenName = "token"
 type Claims struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	UserID   int    `json:"user_id"`
 	UserType int    `json:"user_type"`
 	jwt.StandardClaims
 }
 
-func generateToken(w http.ResponseWriter, email string, password string, userType int) {
+func generateToken(w http.ResponseWriter, email, password string, userID int, userType int) {
 	tokenExpiryTime := time.Now().Add(1 * time.Minute)
 
 	claims := &Claims{
 		Email:    email,
 		Password: password,
+		UserID:   userID,
 		UserType: userType,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: tokenExpiryTime.Unix(),
@@ -47,6 +49,7 @@ func generateToken(w http.ResponseWriter, email string, password string, userTyp
 	})
 
 }
+
 func resetUserToken(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     tokenName,
@@ -69,8 +72,8 @@ func Authenticate(next http.HandlerFunc, accessType int) http.HandlerFunc {
 }
 
 func validateUserToken(w http.ResponseWriter, r *http.Request, accessType int) bool {
-	isAccessTokenValid, id, email, userType := validateTokenFromCookies(r)
-	fmt.Print(id, email, userType, accessType, isAccessTokenValid)
+	isAccessTokenValid, id, email, userID, userType := validateTokenFromCookies(r)
+	fmt.Print(id, email, userType, userID, accessType, isAccessTokenValid)
 
 	if isAccessTokenValid {
 		isUserValid := userType == accessType
@@ -82,7 +85,7 @@ func validateUserToken(w http.ResponseWriter, r *http.Request, accessType int) b
 	return false
 }
 
-func validateTokenFromCookies(r *http.Request) (bool, string, string, int) {
+func validateTokenFromCookies(r *http.Request) (bool, string, string, int, int) {
 	if cookie, err := r.Cookie(tokenName); err == nil {
 		accessToken := cookie.Value
 		accessClaims := &Claims{}
@@ -90,10 +93,10 @@ func validateTokenFromCookies(r *http.Request) (bool, string, string, int) {
 			return jwtKey, nil
 		})
 		if err == nil && parsedToken.Valid {
-			return true, accessClaims.Email, accessClaims.Password, accessClaims.UserType
+			return true, accessClaims.Email, accessClaims.Password, accessClaims.UserID, accessClaims.UserType
 		}
 	}
-	return false, "", "", -1
+	return false, "", "", -1, -1
 }
 
 func sendUnAuthorizedResponse(w http.ResponseWriter) {
