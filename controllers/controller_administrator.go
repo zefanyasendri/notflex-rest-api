@@ -77,6 +77,7 @@ func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+//Suspend/Block status keaktifan member
 func SuspendMember(w http.ResponseWriter, r *http.Request) {
 	db := database.ConnectDB()
 
@@ -89,7 +90,7 @@ func SuspendMember(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(body, &memberUpdates)
 	
 	var member models.Member
-	db.Where("WHERE status_akun = ? AND id_member = ?", "Active", idMember).Find(&member)
+	db.Where("status_akun = ? AND id_member = ?", "Active", idMember).Find(&member)
 	db.Model(&member).Updates(memberUpdates)
 
 	response := models.FilmResponse{Status: 200, Data: member, Message: "Member account suspended"}
@@ -106,6 +107,7 @@ func SuspendMember(w http.ResponseWriter, r *http.Request) {
 	w.Write(result)
 }
 
+//Menambah film baru ke database
 func AddFilm(w http.ResponseWriter, r *http.Request) {
 	db := database.ConnectDB()
 
@@ -130,6 +132,7 @@ func AddFilm(w http.ResponseWriter, r *http.Request) {
 	w.Write(result)
 }
 
+//Mengubah data film sesuai id
 func UpdateFilmById(w http.ResponseWriter, r *http.Request) {
 	db := database.ConnectDB()
 
@@ -160,17 +163,57 @@ func UpdateFilmById(w http.ResponseWriter, r *http.Request) {
 
 }
 
+//Mengambil data film sesuai keyword yang diinputkan
 func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
+	type result struct {
+		IdFilm     int        `json:"idFilm"`
+		Judul      string     `json:"judul"`
+		TahunRilis string     `json:"tahunRilis"`
+		Sutradara  string     `json:"sutradara"`
+		Sinopsis   string     `json:"sinopsis"`
+		IdGenre    int        `json:"idGenre"`
+		JenisGenre string 	  `json:"JenisGenre"`
+		NamaPemain []string   `json:"NamaPemain"`
+	}
 	db := database.ConnectDB()
 
 	vars := mux.Vars(r)
-	keyword := vars["keyword"]
+	keywordJudul := vars["keyword"]
+	
+	var hasil result
+	var hasils []result
 
-	var film []models.Film
-	db.Where("judul LIKE ?", "%"+keyword+"%").Find(&film)
+	query, err := db.Debug().Table("pemains").Select("films.id_film, films.judul, films.tahun_rilis, films.sutradara, pemains.nama_pemain, list_pemains.peran, films.sinopsis, films.id_genre, genres.jenis_genre").Joins("JOIN list_pemains ON pemains.id_pemain = list_pemains.id_pemain").Joins("JOIN films ON list_pemains.id_film = films.id_film").Joins("JOIN genres ON films.id_genre = genres.id_genre").Where("films.judul LIKE ?", "%"+keywordJudul+"%").Rows()
+	
+	defer query.Close()
+	var cek bool
+	cek = false
+	
+	for query.Next() {
+		var pemain string
+		var peranPemain string
+		hasil.NamaPemain = nil
+		query.Scan(&hasil.IdFilm, &hasil.Judul, &hasil.TahunRilis, &hasil.Sutradara, &pemain, &peranPemain, &hasil.Sinopsis, &hasil.IdGenre, &hasil.JenisGenre)
+		test := query.Scan(&hasil.Judul)
+		test2 := query.Scan(&hasil.Judul)
+		
+		if test != test2 {
+			cek = true
+		}
+		hasil.NamaPemain = append(hasil.NamaPemain, pemain)
+		hasil.NamaPemain = append(hasil.NamaPemain, peranPemain)
+		hasils = append(hasils, hasil)
+	}
+	var response models.FilmResponse
+	
+	if cek == true {
+		response = models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
+	} else {
+		response = models.FilmResponse{Status: 200, Data: hasil, Message: "Data Found"}
+	}
 
-	response := models.FilmResponse{Status: 200, Data: film, Message: "Data Found"}
-	result, err := json.Marshal(response)
+	//response := models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
+	results, err := json.Marshal(response)
 	
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -178,5 +221,5 @@ func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(result)
+	w.Write(results)
 }

@@ -5,3 +5,9 @@ type History struct {
 	IdFilm        int    `json:"idFilm" gorm:"primaryKey"`
 	TanggalNonton string `json:"tanggalNonton"`
 }
+
+type HistoryResponse struct {
+	Status  int         `json:"Status"`
+	Message string      `json:"Message"`
+	Data    interface{} `json:"Data"`
+}
