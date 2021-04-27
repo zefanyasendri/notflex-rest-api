@@ -12,10 +12,7 @@ import (
 
 func main() {
 	router := mux.NewRouter()
-
-	// Hans
 	router.HandleFunc("/login", controllers.LoginAdmin).Methods("GET")
-	router.HandleFunc("/loginmember", controllers.Login).Methods("GET")
 	router.HandleFunc("/getuserbyemail", controllers.Authenticate(controllers.GetMemberBaseOnEmail, 0)).Methods("GET")
 
 	// Nealson
@@ -30,6 +27,8 @@ func main() {
 	router.HandleFunc("/getfilmbykeywords/{keywords}", controllers.GetFilmByKeywords).Methods("GET")
 
 	//Hilbert
+  router.HandleFunc("/loginmember", controllers.Login).Methods("GET")
+	router.HandleFunc("/watch/{id}", controllers.Authenticate(controllers.WatchFilm, 1)).Methods("GET")
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
@@ -39,7 +38,6 @@ func main() {
 	handler := corsHandler.Handler(router)
 
 	http.Handle("/", handler)
-	fmt.Println(controllers.HashPassword("john"))
-	fmt.Println("Connected to port 8000")
-	log.Fatal(http.ListenAndServe(":8000", router))
+	fmt.Println("Connected to port 4321")
+	log.Fatal(http.ListenAndServe(":4321", router))
 }
