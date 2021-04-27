@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
@@ -18,40 +21,41 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	err := CheckLogin(email, password)
+	res1, err := CheckLogin(email, password)
 	if err != nil {
-		response = models.Response{
-			Status:  http.StatusInternalServerError,
-			Message: "Email/password seems to be incorrect. Please try again.",
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.Response{
+			Status: http.StatusInternalServerError,
+			// Message: "Email/password seems to be incorrect. Please try again.",
+			Message: err.Error(),
 			Data:    nil,
-		}
-		json.NewEncoder(w).Encode(response)
+		})
 		return
 	}
-
-	generateToken(w, email, password, 1)
 
 	res2, err := CheckSuspended(email)
 
 	if err != nil {
-		response = models.Response{
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.Response{
 			Status:  http.StatusInternalServerError,
 			Message: "Something went wrong please try again.",
 			Data:    nil,
-		}
-		json.NewEncoder(w).Encode(response)
+		})
 		return
 	}
 
 	if !res2 {
-		response = models.Response{
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(models.Response{
 			Status:  http.StatusUnauthorized,
 			Message: "I'm sorry looks like your account is been suspended.",
 			Data:    nil,
-		}
-		json.NewEncoder(w).Encode(response)
+		})
 		return
 	}
+
+	generateToken(w, email, password, res1, 1)
 
 	response = models.Response{
 		Status:  http.StatusOK,
@@ -83,24 +87,27 @@ func CheckSuspended(email string) (bool, error) {
 	return true, nil
 }
 
-func CheckLogin(email, password string) error {
+func CheckLogin(email, password string) (int, error) {
 	var pwd string
+	var id_member int
 	db := db.ConnectDB()
-	row := db.Table("members").Where("email = ?", email).Select("password").Row()
+	row := db.Debug().Table("members").Where("email = ?", email).Select("id_member", "password").Row()
 	err := row.Err()
 
 	if err != nil {
 		fmt.Println("Query error")
-		return err
+		return -1, err
 	}
 
-	row.Scan(&pwd)
+	row.Scan(&id_member, &pwd)
+	fmt.Println(pwd)
+	fmt.Println(id_member)
 	match, err := CheckHashedPassword(password, pwd)
 	if !match {
 		fmt.Println("Hash and password does not match.")
-		return err
+		return -1, err
 	}
-	return nil
+	return id_member, nil
 }
 
 func UpdateProfile(w http.ResponseWriter, r *http.Request) {
@@ -130,4 +137,125 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(result)
+}
+
+func WatchFilm(w http.ResponseWriter, r *http.Request) {
+	type FilmHeader struct {
+		Judul       string   `json:"judul"`
+		TahunRilis  string   `json:"tahunRilis"`
+		Sutradara   string   `json:"sutradara"`
+		PemainUtama []string `json:"pemainutama"`
+		Genre       string   `json:"genre"`
+		Sinopsis    string   `json:"sinopsis"`
+	}
+	var filmHeader FilmHeader
+	db := db.ConnectDB()
+	vars := mux.Vars(r)
+
+	film_id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.Response{
+			Status:  http.StatusInternalServerError,
+			Message: "Something went wrong please try again",
+			Data:    nil,
+		})
+		return
+	}
+
+	//Get from film
+	res := db.Debug().Where("id_film = ?", film_id).Find(&models.Film{})
+	errRes := res.Error
+
+	//If query error
+	w.Header().Set("Content-Type", "application/json")
+	if errRes != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.Response{
+			Status:  http.StatusInternalServerError,
+			Message: "Something went wrong please try again",
+			Data:    nil,
+		})
+		return
+	}
+	//If there are no rows
+	if res.RowsAffected == 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.Response{
+			Status:  http.StatusInternalServerError,
+			Message: "There are no films available",
+			Data:    nil,
+		})
+		return
+	}
+	//Insert to history
+	rows, err := db.Debug().Table("pemains a").Select("c.judul, c.tahun_rilis, c.sutradara, a.nama_pemain, d.jenis_genre, c.sinopsis").Joins("join list_pemains b on a.id_pemain = b.id_pemain").Joins("join films c on b.id_film = c.id_film").Joins("join genres d on c.id_genre = d.id_genre").Where("c.id_film = ? and b.peran = ?", film_id, "Pemain Utama").Rows()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.Response{
+			Status:  http.StatusInternalServerError,
+			Message: "Something went wrong please try again",
+			Data:    nil,
+		})
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var pemain string
+		rows.Scan(&filmHeader.Judul, &filmHeader.TahunRilis, &filmHeader.Sutradara, &pemain, &filmHeader.Genre, &filmHeader.Sinopsis)
+		filmHeader.PemainUtama = append(filmHeader.PemainUtama, pemain)
+	}
+
+	//Validate from cookies
+	status, userID, err := GetIDFromCookies(r)
+	if !status && err != nil {
+		json.NewEncoder(w).Encode(models.Response{
+			Status:  http.StatusInternalServerError,
+			Message: "Something went wrong please try again",
+			Data:    nil,
+		})
+		return
+	}
+
+	//Insert to history and check if there is an error
+	if err := db.Create(&models.History{
+		IdMember:      userID,
+		IdFilm:        film_id,
+		TanggalNonton: time.Now(),
+	}).Error; err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.Response{
+			Status:  http.StatusInternalServerError,
+			Message: "Something went wrong please try again",
+			Data:    nil,
+		})
+		return
+	}
+
+	//Output JSON
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.Response{
+		Status:  http.StatusOK,
+		Message: "Enjoy the movie!",
+		Data:    filmHeader,
+	})
+
+}
+
+func GetIDFromCookies(r *http.Request) (bool, int, error) {
+	cookie, err := r.Cookie(tokenName)
+	if err != nil {
+		return false, -1, err
+	}
+
+	accessToken := cookie.Value
+	accessClaims := &Claims{}
+	parsedToken, err := jwt.ParseWithClaims(accessToken, accessClaims, func(accessToken *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil && !parsedToken.Valid {
+		return false, -1, err
+	}
+	return true, accessClaims.UserID, nil
 }

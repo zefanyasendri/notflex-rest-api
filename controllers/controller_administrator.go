@@ -28,7 +28,7 @@ func LoginAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db.Find(&person)
-	generateToken(w, person.Email, person.Password, 0)
+	generateToken(w, person.Email, person.Password, 0, 0)
 	response.Status = 200
 	response.Message = "Success Login <WELCOME>"
 
