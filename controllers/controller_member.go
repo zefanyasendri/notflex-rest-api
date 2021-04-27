@@ -3,9 +3,10 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
-  
-  "github.com/gorilla/mux"
+
+	"github.com/gorilla/mux"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
@@ -103,7 +104,7 @@ func CheckLogin(email, password string) error {
 }
 
 func UpdateProfile(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	vars := mux.Vars(r)
 	id_member := vars["id"]
@@ -117,7 +118,7 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	db.Find(&member, id_member)
 	db.Model(&member).Updates(profileUpdates)
 
-	response := models.MemberResponse{Status: 200, Data: member, Message: "Member Data Updated"}
+	response := models.Response{Status: 200, Data: member, Message: "Member Data Updated"}
 	result, err := json.Marshal(response)
 
 	if err != nil {
