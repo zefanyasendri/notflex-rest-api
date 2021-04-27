@@ -13,15 +13,23 @@ import (
 func main() {
 	router := mux.NewRouter()
 
+	// Hans
 	router.HandleFunc("/login", controllers.LoginAdmin).Methods("GET")
 	router.HandleFunc("/loginmember", controllers.Login).Methods("GET")
 	router.HandleFunc("/getuserbyemail", controllers.Authenticate(controllers.GetMemberBaseOnEmail, 0)).Methods("GET")
+
+	// Nealson
 	router.HandleFunc("/suspend/{id}", controllers.SuspendMember).Methods("PUT")
 	router.HandleFunc("/addfilm", controllers.AddFilm).Methods("POST")
 	router.HandleFunc("/updatefilmbyid/{id}", controllers.UpdateFilmById).Methods("PUT")
 	router.HandleFunc("/getfilmbykeyword/{keyword}", controllers.GetFilmByKeyword).Methods("GET")
+
+	// Zefa
 	router.HandleFunc("/updateprofile/{id}", controllers.UpdateProfile).Methods("PUT")
 	router.HandleFunc("/getfilmbyid/{id}", controllers.GetFilmByID).Methods("GET")
+	router.HandleFunc("/getfilmbykeywords/{keywords}", controllers.GetFilmByKeywords).Methods("GET")
+
+	//Hilbert
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
