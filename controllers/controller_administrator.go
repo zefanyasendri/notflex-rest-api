@@ -183,36 +183,30 @@ func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
 	var hasil result
 	var hasils []result
 
-	query, err := db.Debug().Table("pemains").Select("films.id_film, films.judul, films.tahun_rilis, films.sutradara, pemains.nama_pemain, list_pemains.peran, films.sinopsis, films.id_genre, genres.jenis_genre").Joins("JOIN list_pemains ON pemains.id_pemain = list_pemains.id_pemain").Joins("JOIN films ON list_pemains.id_film = films.id_film").Joins("JOIN genres ON films.id_genre = genres.id_genre").Where("films.judul LIKE ?", "%"+keywordJudul+"%").Rows()
-	
-	defer query.Close()
-	var cek bool
-	cek = false
-	
-	for query.Next() {
-		var pemain string
-		var peranPemain string
-		hasil.NamaPemain = nil
-		query.Scan(&hasil.IdFilm, &hasil.Judul, &hasil.TahunRilis, &hasil.Sutradara, &pemain, &peranPemain, &hasil.Sinopsis, &hasil.IdGenre, &hasil.JenisGenre)
-		test := query.Scan(&hasil.Judul)
-		test2 := query.Scan(&hasil.Judul)
-		
-		if test != test2 {
-			cek = true
+	query_film, _ := db.Debug().Table("films").Select("films.id_film, films.judul, films.tahun_rilis, films.sutradara, films.sinopsis, films.id_genre, genres.jenis_genre").Joins("JOIN genres ON films.id_genre = genres.id_genre").Where("films.judul LIKE ?", "%"+keywordJudul+"%").Rows()
+
+	defer query_film.Close()
+
+	for query_film.Next() {
+
+		query_film.Scan(&hasil.IdFilm, &hasil.Judul, &hasil.TahunRilis, &hasil.Sutradara, &hasil.Sinopsis, &hasil.IdGenre, &hasil.JenisGenre)
+
+		query_pemain, _ := db.Debug().Table("pemains").Select("pemains.nama_pemain, list_pemains.peran").Joins("JOIN list_pemains ON pemains.id_pemain = list_pemains.id_pemain").Joins("JOIN films ON list_pemains.id_film = films.id_film").Where("films.id_film = ?", &hasil.IdFilm).Rows()
+
+		for query_pemain.Next() {
+			var pemain string
+			var peranPemain string
+			query_pemain.Scan(&pemain, &peranPemain)
+			if pemain != "" {
+				hasil.NamaPemain = append(hasil.NamaPemain, pemain)
+				hasil.NamaPemain = append(hasil.NamaPemain, peranPemain)
+			}
 		}
-		hasil.NamaPemain = append(hasil.NamaPemain, pemain)
-		hasil.NamaPemain = append(hasil.NamaPemain, peranPemain)
 		hasils = append(hasils, hasil)
-	}
-	var response models.FilmResponse
-	
-	if cek == true {
-		response = models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
-	} else {
-		response = models.FilmResponse{Status: 200, Data: hasil, Message: "Data Found"}
+		hasil.NamaPemain = nil
 	}
 
-	//response := models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
+	response := models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
 	results, err := json.Marshal(response)
 	
 	if err != nil {
