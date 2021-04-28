@@ -100,8 +100,8 @@ func validateTokenFromCookies(r *http.Request) (bool, string, string, int, int) 
 }
 
 func sendUnAuthorizedResponse(w http.ResponseWriter) {
-	var response models.PersonResponse
-	//response.Status = 401
+	var response models.MemberResponse
+	response.Status = 401
 	response.Message = "Unauthorized Access"
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)

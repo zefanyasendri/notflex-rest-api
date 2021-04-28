@@ -327,3 +327,46 @@ func GetWatchHistory(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(result)
 }
+
+func Register(w http.ResponseWriter, r *http.Request) {
+	db := db.ConnectDB()
+
+	body, _ := ioutil.ReadAll(r.Body)
+
+	var newmember models.Member
+	json.Unmarshal(body, &newmember)
+	var emailscan string
+	query, _ := db.Debug().Table("members").Select("email").Where("email = ?", newmember.Email).Rows()
+	fmt.Println(newmember.Email)
+
+	for query.Next() {
+		query.Scan(&emailscan)
+	}
+	fmt.Println(emailscan)
+	if len(emailscan) == 0 {
+		response := models.FilmResponse{Status: 200, Data: newmember, Message: "WELCOME ABOARD!!!"}
+		result, err := json.Marshal(response)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		db.Save(&newmember)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(result)
+		return
+	} else {
+		response := models.FilmResponse{Status: 400, Message: "Email telah diambil alih"}
+		result, err := json.Marshal(response)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(result)
+	}
+}
