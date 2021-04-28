@@ -344,14 +344,13 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println(emailscan)
 	if len(emailscan) == 0 {
+		db.Save(&newmember)
 		response := models.FilmResponse{Status: 200, Data: newmember, Message: "WELCOME ABOARD!!!"}
 		result, err := json.Marshal(response)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-
-		db.Save(&newmember)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
