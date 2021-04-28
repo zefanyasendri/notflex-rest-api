@@ -184,46 +184,32 @@ func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
 	var hasil result
 	var hasils []result
 
-	query, err := db.Debug().Table("pemains").Select("films.id_film, films.judul, films.tahun_rilis, films.sutradara, pemains.nama_pemain, list_pemains.peran, films.sinopsis, films.id_genre, genres.jenis_genre").Joins("JOIN list_pemains ON pemains.id_pemain = list_pemains.id_pemain").Joins("JOIN films ON list_pemains.id_film = films.id_film").Joins("JOIN genres ON films.id_genre = genres.id_genre").Where("films.judul LIKE ?", "%"+keywordJudul+"%").Rows()
-	
-	defer query.Close()
-	
-	for query.Next() {
-		var pemain string
-		var peranPemain string
-		hasil.NamaPemain = nil
-		query.Scan(&hasil.IdFilm, &hasil.Judul, &hasil.TahunRilis, &hasil.Sutradara, &pemain, &peranPemain, &hasil.Sinopsis, &hasil.IdGenre, &hasil.JenisGenre)
-		hasil.NamaPemain = append(hasil.NamaPemain, pemain)
-		hasil.NamaPemain = append(hasil.NamaPemain, peranPemain)
+	query_film, _ := db.Debug().Table("films").Select("films.id_film, films.judul, films.tahun_rilis, films.sutradara, films.sinopsis, films.id_genre, genres.jenis_genre").Joins("JOIN genres ON films.id_genre = genres.id_genre").Where("films.judul LIKE ?", "%"+keywordJudul+"%").Rows()
+
+	defer query_film.Close()
+
+	for query_film.Next() {
+
+		query_film.Scan(&hasil.IdFilm, &hasil.Judul, &hasil.TahunRilis, &hasil.Sutradara, &hasil.Sinopsis, &hasil.IdGenre, &hasil.JenisGenre)
+
+		query_pemain, _ := db.Debug().Table("pemains").Select("pemains.nama_pemain, list_pemains.peran").Joins("JOIN list_pemains ON pemains.id_pemain = list_pemains.id_pemain").Joins("JOIN films ON list_pemains.id_film = films.id_film").Where("films.id_film = ?", &hasil.IdFilm).Rows()
+
+		for query_pemain.Next() {
+			var pemain string
+			var peranPemain string
+			query_pemain.Scan(&pemain, &peranPemain)
+			if pemain != "" {
+				hasil.NamaPemain = append(hasil.NamaPemain, pemain)
+				hasil.NamaPemain = append(hasil.NamaPemain, peranPemain)
+			}
+		}
 		hasils = append(hasils, hasil)
+		hasil.NamaPemain = nil
 	}
-	var response models.FilmResponse
-	
+
 	response := models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
 	results, err := json.Marshal(response)
-
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(result)
-}
-
-func GetFilmByID(w http.ResponseWriter, r *http.Request) {
-	db := db.ConnectDB()
-
-	vars := mux.Vars(r)
-	id := vars["id"]
-
-	var film []models.Film
-	// db.Where("judul = ?", id).Find(&film)
-	db.First(&film, id)
-
-	response := models.FilmResponse{Status: 200, Data: film, Message: "Data Found"}
-	result, err := json.Marshal(response)
+	
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
