@@ -17,3 +17,4 @@ type MemberResponse struct {
 	Message string      `json:"Message"`
 	Data    interface{} `json:"Data"`
 }
+
