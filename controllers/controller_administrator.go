@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,8 +18,8 @@ func LoginAdmin(w http.ResponseWriter, r *http.Request) {
 	pass := r.URL.Query()["password"]
 	email := r.URL.Query()["email"]
 
-	var person models.Person
-	var response models.PersonResponse
+	var person models.Member
+	var response models.MemberResponse
 
 	if err := db.Where("email = ? and password = ?", email[0], pass[0]).First(&person).Error; err != nil {
 		log.Print(err)
@@ -37,45 +38,55 @@ func LoginAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
-	db := db.Connect()
-	defer db.Close()
+
+	type result struct {
+		Email         string   `json:"email"`
+		Password      string   `json:"password"`
+		IdMember      int      `json:"idMember" gorm:"primaryKey"`
+		NamaLengkap   string   `json:"namaLengkap"`
+		TanggalLahir  string   `json:"tanggalLahir"`
+		JenisKelamin  string   `json:"jenisKelamin"`
+		AsalNegara    string   `json:"asalNegara"`
+		StatusAkun    string   `json:"statusAkun"`
+		NoKartuKredit string   `json:"noKartuKredit" gorm:"type:varchar(191)"`
+		History       []string `json:"history"`
+	}
+
+	db := db.ConnectDB()
 
 	email := r.URL.Query()["email"]
 
-	query := "SELECT * FROM member"
+	var hasil result
 
-	if email != nil {
-		query += " WHERE email ='" + email[0] + "'"
-	}
+	query_member, _ := db.Debug().Table("members").Select("*").Where("email = ?", email[0]).Rows()
 
-	rows, err := db.Query(query)
-
-	if err != nil {
-		log.Print(err)
-	}
-
-	var member models.Member
-	var members []models.Member
-	for rows.Next() {
-		if err := rows.Scan(&member.IdMember, &member.NamaLengkap, &member.TanggalLahir, &member.JenisKelamin, &member.AsalNegara, &member.StatusAkun, &member.NoKartuKredit, &member.Email); err != nil {
-			log.Print(err.Error())
-		} else {
-			members = append(members, member)
+	for query_member.Next() {
+		query_member.Scan(&hasil.Email, &hasil.Password, &hasil.IdMember, &hasil.NamaLengkap, &hasil.TanggalLahir, &hasil.JenisKelamin, &hasil.AsalNegara, &hasil.StatusAkun, &hasil.NoKartuKredit)
+		query_history, _ := db.Debug().Table("films").Select("films.judul, histories.tanggal_nonton").Joins("JOIN histories ON films.id_film = histories.id_film JOIN members ON histories.id_member = members.id_member").Where("members.email = ?", email[0]).Rows()
+		for query_history.Next() {
+			var Judulfilm string
+			var TanggalNontonFilm string
+			query_history.Scan(&Judulfilm, &TanggalNontonFilm)
+			hasil.History = append(hasil.History, Judulfilm)
+			hasil.History = append(hasil.History, TanggalNontonFilm)
+			fmt.Println(hasil.History)
 		}
 	}
-
-	var response models.Response
-	if err == nil {
-		response.Status = 200
-		response.Message = "Success"
-		response.Data = members
+	var response models.MemberResponse
+	if len(hasil.Email) == 0 {
+		response = models.MemberResponse{Status: 404, Message: "Data Not Found"}
 	} else {
-		response.Status = 400
-		response.Message = "Error"
+		response = models.MemberResponse{Status: 200, Data: hasil, Message: "Data Found"}
+	}
+	results, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	w.WriteHeader(http.StatusOK)
+	w.Write(results)
 }
 
 //Suspend/Block status keaktifan member
