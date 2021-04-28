@@ -18,8 +18,8 @@ func LoginAdmin(w http.ResponseWriter, r *http.Request) {
 	pass := r.URL.Query()["password"]
 	email := r.URL.Query()["email"]
 
-	var person models.Person
-	var response models.PersonResponse
+	var person models.Member
+	var response models.MemberResponse
 
 	if err := db.Where("email = ? and password = ?", email[0], pass[0]).First(&person).Error; err != nil {
 		log.Print(err)
