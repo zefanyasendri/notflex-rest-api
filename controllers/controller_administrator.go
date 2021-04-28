@@ -7,15 +7,16 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	database "github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
+	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
 
 func LoginAdmin(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	pass := r.URL.Query()["password"]
 	email := r.URL.Query()["email"]
+
 	var person models.Person
 	var response models.PersonResponse
 
@@ -27,7 +28,7 @@ func LoginAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db.Find(&person)
-	generateToken(w, person.Email, person.Password, 0)
+	generateToken(w, person.Email, person.Password, 0, 0)
 	response.Status = 200
 	response.Message = "Success Login <WELCOME>"
 
@@ -36,7 +37,7 @@ func LoginAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
-	db := database.Connect()
+	db := db.Connect()
 	defer db.Close()
 
 	email := r.URL.Query()["email"]
@@ -63,7 +64,7 @@ func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var response models.MemberResponse
+	var response models.Response
 	if err == nil {
 		response.Status = 200
 		response.Message = "Success"
@@ -79,7 +80,7 @@ func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 
 //Suspend/Block status keaktifan member
 func SuspendMember(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	body, _ := ioutil.ReadAll(r.Body)
 
@@ -88,18 +89,18 @@ func SuspendMember(w http.ResponseWriter, r *http.Request) {
 
 	var memberUpdates models.Member
 	json.Unmarshal(body, &memberUpdates)
-	
+
 	var member models.Member
 	db.Where("status_akun = ? AND id_member = ?", "Active", idMember).Find(&member)
 	db.Model(&member).Updates(memberUpdates)
 
 	response := models.FilmResponse{Status: 200, Data: member, Message: "Member account suspended"}
 	result, err := json.Marshal(response)
-	
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	
+
 	db.Save(&member)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -109,7 +110,7 @@ func SuspendMember(w http.ResponseWriter, r *http.Request) {
 
 //Menambah film baru ke database
 func AddFilm(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	body, _ := ioutil.ReadAll(r.Body)
 
@@ -134,7 +135,7 @@ func AddFilm(w http.ResponseWriter, r *http.Request) {
 
 //Mengubah data film sesuai id
 func UpdateFilmById(w http.ResponseWriter, r *http.Request) {
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	body, _ := ioutil.ReadAll(r.Body)
 
@@ -143,18 +144,18 @@ func UpdateFilmById(w http.ResponseWriter, r *http.Request) {
 
 	var filmUpdates models.Film
 	json.Unmarshal(body, &filmUpdates)
-	
+
 	var film models.Film
 	db.Find(&film, idFilm)
 	db.Model(&film).Updates(filmUpdates)
 
 	response := models.FilmResponse{Status: 200, Data: film, Message: "Film Data Updated"}
 	result, err := json.Marshal(response)
-	
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	
+
 	db.Save(&film)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -209,6 +210,7 @@ func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
 	response := models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
 	results, err := json.Marshal(response)
 	
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
