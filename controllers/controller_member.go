@@ -263,7 +263,7 @@ func Subscribe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db := db.ConnectDB()
-  
+
 	//Mencari kartu kredit yang mungkin pernah dimasukkan oleh user
 	var db_res models.KartuKredit
 	query := db.Where("id_member = ?", userID).Find(&db_res)
@@ -379,9 +379,9 @@ func CheckSubscribe(id_member int) bool {
 
 func GetWatchHistory(w http.ResponseWriter, r *http.Request) {
 	type Response struct {
-	Judul string    `json:"judul"`
-	Waktu time.Time `json:"waktu"`
-    
+		Judul string    `json:"judul"`
+		Waktu time.Time `json:"waktu"`
+	}
 	//Validate from cookies
 	status, id_member, err := GetIDFromCookies(r)
 	if !status && err != nil {
@@ -392,6 +392,7 @@ func GetWatchHistory(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	db := db.ConnectDB()
 	query, err := db.Table("films").Select("films.judul, histories.tanggal_nonton").Joins("LEFT JOIN histories ON histories.id_film = films.id_film LEFT JOIN members ON histories.id_member = members.id_member").Where("histories.id_member = ?", id_member).Rows()
 
 	if err != nil {
