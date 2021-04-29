@@ -11,8 +11,8 @@ import (
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/login", controllers.LoginAdmin).Methods("GET")
-	router.HandleFunc("/getuserbyemail", controllers.Authenticate(controllers.GetMemberBaseOnEmail, 0)).Methods("GET")
+	router.HandleFunc("/regis", controllers.Register).Methods("POST")
+	router.HandleFunc("/getuserbyemail", controllers.GetMemberBaseOnEmail).Methods("GET")
 
 	// Nealson
 	router.HandleFunc("/suspend/{id}", controllers.SuspendMember).Methods("PUT")
@@ -24,6 +24,7 @@ func main() {
 	router.HandleFunc("/updateprofile/{id}", controllers.UpdateProfile).Methods("PUT")
 	router.HandleFunc("/getfilmbyid/{id}", controllers.GetFilmByID).Methods("GET")
 	router.HandleFunc("/getfilmbykeywords/{keywords}", controllers.GetFilmByKeywords).Methods("GET")
+	router.HandleFunc("/getwatchhistory", controllers.Authenticate(controllers.GetWatchHistory, 1)).Methods("GET")
 
 	//Hilbert
 	router.HandleFunc("/loginmember", controllers.Login).Methods("GET")

@@ -263,7 +263,7 @@ func Subscribe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db := db.ConnectDB()
-
+  
 	//Mencari kartu kredit yang mungkin pernah dimasukkan oleh user
 	var db_res models.KartuKredit
 	query := db.Where("id_member = ?", userID).Find(&db_res)
@@ -375,4 +375,88 @@ func CheckSubscribe(id_member int) bool {
 		return true
 	}
 	return false
+}
+
+func GetWatchHistory(w http.ResponseWriter, r *http.Request) {
+	type Response struct {
+	Judul string    `json:"judul"`
+	Waktu time.Time `json:"waktu"`
+    
+	//Validate from cookies
+	status, id_member, err := GetIDFromCookies(r)
+	if !status && err != nil {
+		json.NewEncoder(w).Encode(models.Response{
+			Status:  http.StatusInternalServerError,
+			Message: "Something went wrong please try again",
+			Data:    nil,
+		})
+		return
+	}
+	query, err := db.Table("films").Select("films.judul, histories.tanggal_nonton").Joins("LEFT JOIN histories ON histories.id_film = films.id_film LEFT JOIN members ON histories.id_member = members.id_member").Where("histories.id_member = ?", id_member).Rows()
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	defer query.Close()
+	var response Response
+	var responses []Response
+
+	for query.Next() {
+		query.Scan(&response.Judul, &response.Waktu)
+		responses = append(responses, response)
+	}
+
+	res := models.FilmResponse{Status: 200, Data: responses, Message: "Data Found"}
+	result, err := json.Marshal(res)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(result)
+}
+
+func Register(w http.ResponseWriter, r *http.Request) {
+	db := db.ConnectDB()
+
+	body, _ := ioutil.ReadAll(r.Body)
+
+	var newmember models.Member
+	json.Unmarshal(body, &newmember)
+	var emailscan string
+	query, _ := db.Debug().Table("members").Select("email").Where("email = ?", newmember.Email).Rows()
+	fmt.Println(newmember.Email)
+
+	for query.Next() {
+		query.Scan(&emailscan)
+	}
+	fmt.Println(emailscan)
+	if len(emailscan) == 0 {
+		db.Save(&newmember)
+		response := models.FilmResponse{Status: 200, Data: newmember, Message: "WELCOME ABOARD!!!"}
+		result, err := json.Marshal(response)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(result)
+		return
+	} else {
+		response := models.FilmResponse{Status: 400, Message: "Email telah diambil alih"}
+		result, err := json.Marshal(response)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(result)
+	}
 }
