@@ -45,11 +45,11 @@ func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(hasil.History)
 		}
 	}
-	var response models.MemberResponse
+	var response models.Response
 	if len(hasil.Email) == 0 {
-		response = models.MemberResponse{Status: 404, Message: "Data Not Found"}
+		response = models.Response{Status: 404, Message: "Data Not Found"}
 	} else {
-		response = models.MemberResponse{Status: 200, Data: hasil, Message: "Data Found"}
+		response = models.Response{Status: 200, Data: hasil, Message: "Data Found"}
 	}
 	results, err := json.Marshal(response)
 
