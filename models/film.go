@@ -8,7 +8,7 @@ type Film struct {
 	Sinopsis   string     `form:"sinopsis" json:"sinopsis"`
 	IdGenre    int        `form:"idGenre" json:"idGenre"`
 	ListPemain ListPemain `gorm:"foreignKey:IdFilm"`
-	History    History    `gorm:"foreignKey:IdFilm"`
+	History    []History  `gorm:"foreignKey:IdFilm"`
 }
 
 type FilmResponse struct {
