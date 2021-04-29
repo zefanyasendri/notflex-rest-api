@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/rs/cors"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/controllers"
 )
 
@@ -30,17 +29,9 @@ func main() {
 	//Hilbert
 	router.HandleFunc("/loginmember", controllers.Login).Methods("GET")
 	router.HandleFunc("/watch/{id}", controllers.Authenticate(controllers.WatchFilm, 1)).Methods("GET")
+	router.HandleFunc("/subscribe", controllers.Authenticate(controllers.Subscribe, 1)).Methods("PUT")
+	router.HandleFunc("/unsubscribe", controllers.Authenticate(controllers.Unsubscribe, 1)).Methods("PUT")
 
-	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-		AllowCredentials: true,
-	})
-	handler := corsHandler.Handler(router)
-
-	fmt.Println(controllers.HashPassword("12345"))
-
-	http.Handle("/", handler)
 	fmt.Println("Connected to port 4321")
 	log.Fatal(http.ListenAndServe(":4321", router))
 }
