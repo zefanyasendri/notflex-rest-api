@@ -57,7 +57,7 @@ func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 	var member models.Member
 	var members []models.Member
 	for rows.Next() {
-		if err := rows.Scan(&member.IdMember, &member.NamaLengkap, &member.TanggalLahir, &member.JenisKelamin, &member.AsalNegara, &member.StatusAkun, &member.NoKartuKredit, &member.Email); err != nil {
+		if err := rows.Scan(&member.IdMember, &member.NamaLengkap, &member.TanggalLahir, &member.JenisKelamin, &member.AsalNegara, &member.StatusAkun, &member.Email); err != nil {
 			log.Print(err.Error())
 		} else {
 			members = append(members, member)
@@ -90,7 +90,7 @@ func SuspendMember(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(body, &memberUpdates)
 
 	var member models.Member
-	db.Where("status_akun = ? AND id_member = ?", "Active", idMember).Find(&member)
+	db.Where("WHERE status_akun = ? AND id_member = ?", "Active", idMember).Find(&member)
 	db.Model(&member).Updates(memberUpdates)
 
 	response := models.FilmResponse{Status: 200, Data: member, Message: "Member account suspended"}
