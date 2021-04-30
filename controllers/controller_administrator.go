@@ -34,16 +34,17 @@ func LoginAdmin(w http.ResponseWriter, r *http.Request) {
 func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 
 	type result struct {
-		Email         string   `json:"email"`
-		Password      string   `json:"password"`
-		IdMember      int      `json:"idMember" gorm:"primaryKey"`
-		NamaLengkap   string   `json:"namaLengkap"`
-		TanggalLahir  string   `json:"tanggalLahir"`
-		JenisKelamin  string   `json:"jenisKelamin"`
-		AsalNegara    string   `json:"asalNegara"`
-		StatusAkun    string   `json:"statusAkun"`
-		NoKartuKredit string   `json:"noKartuKredit" gorm:"type:varchar(191)"`
-		History       []string `json:"history"`
+		Email             string   `json:"email"`
+		Password          string   `json:"password"`
+		IdMember          int      `json:"idMember" gorm:"primaryKey"`
+		NamaLengkap       string   `json:"namaLengkap"`
+		TanggalLahir      string   `json:"tanggalLahir"`
+		JenisKelamin      string   `json:"jenisKelamin"`
+		AsalNegara        string   `json:"asalNegara"`
+		StatusAkun        string   `json:"statusAkun"`
+		NoKartuKredit     string   `json:"noKartuKredit" gorm:"type:varchar(191)"`
+		SubscriptionUntil string   `json:"subscriptionUntil"`
+		History           []string `json:"history"`
 	}
 
 	db := db.ConnectDB()
@@ -52,19 +53,22 @@ func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 
 	var hasil result
 
-	query_member, _ := db.Debug().Table("members").Select("*").Where("email = ?", email[0]).Rows()
-	for query_member.Next() {
-		query_member.Scan(&hasil.Email, &hasil.Password, &hasil.IdMember, &hasil.NamaLengkap, &hasil.TanggalLahir, &hasil.JenisKelamin, &hasil.AsalNegara, &hasil.StatusAkun, &hasil.NoKartuKredit)
-		query_history, _ := db.Debug().Table("films").Select("films.judul, histories.tanggal_nonton").Joins("JOIN histories ON films.id_film = histories.id_film JOIN members ON histories.id_member = members.id_member").Where("members.email = ?", email[0]).Rows()
-		for query_history.Next() {
-			var Judulfilm string
-			var TanggalNontonFilm string
-			query_history.Scan(&Judulfilm, &TanggalNontonFilm)
-			hasil.History = append(hasil.History, Judulfilm)
-			hasil.History = append(hasil.History, TanggalNontonFilm)
-			fmt.Println(hasil.History)
+	query_member, error := db.Debug().Table("members").Select("*").Where("email = ?", email[0]).Rows()
+	if error == nil {
+		for query_member.Next() {
+			query_member.Scan(&hasil.Email, &hasil.Password, &hasil.IdMember, &hasil.NamaLengkap, &hasil.TanggalLahir, &hasil.JenisKelamin, &hasil.AsalNegara, &hasil.StatusAkun, &hasil.NoKartuKredit, &hasil.SubscriptionUntil)
+			query_history, _ := db.Debug().Table("films").Select("films.judul, histories.tanggal_nonton").Joins("JOIN histories ON films.id_film = histories.id_film JOIN members ON histories.id_member = members.id_member").Where("members.email = ?", email[0]).Rows()
+			for query_history.Next() {
+				var Judulfilm string
+				var TanggalNontonFilm string
+				query_history.Scan(&Judulfilm, &TanggalNontonFilm)
+				hasil.History = append(hasil.History, Judulfilm)
+				hasil.History = append(hasil.History, TanggalNontonFilm)
+				fmt.Println(hasil.History)
+			}
 		}
 	}
+
 	var response models.Response
 	if len(hasil.Email) == 0 {
 		response = models.Response{Status: 404, Message: "Data Not Found"}
