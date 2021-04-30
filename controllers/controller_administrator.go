@@ -95,17 +95,20 @@ func SuspendMember(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(body, &memberUpdates)
 
 	var member models.Member
-	db.Where("WHERE status_akun = ? AND id_member = ?", "Active", idMember).Find(&member)
-	db.Model(&member).Updates(memberUpdates)
 
-	response := models.FilmResponse{Status: 200, Data: member, Message: "Member account suspended"}
+	var response models.Response
+	if err := db.Debug().Where("id_member = ?", idMember).Find(&member).Error; err != nil {
+		response = models.Response{Status: 404, Message: "Member account not found"}
+	} else {
+		db.Model(&member).Where("status_akun LIKE ? OR status_akun LIKE ? AND id_member = ?", "%Subscribed%", "%Active%", idMember).Updates(memberUpdates)
+		response = models.Response{Status: 200, Message: "Member account suspended"}
+	}
+	
 	result, err := json.Marshal(response)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	db.Save(&member)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -114,35 +117,23 @@ func SuspendMember(w http.ResponseWriter, r *http.Request) {
 
 //Menambah film baru ke database
 func AddFilm(w http.ResponseWriter, r *http.Request) {
-	//db := db.ConnectDB()
-	type Hasilinput struct {
-		IdFilm     int    `json:"idFilm"`
-		Judul      string `json:"judul"`
-		TahunRilis string `json:"tahunRilis"`
-		Sutradara  string `json:"sutradara"`
-		Sinopsis   string `json:"sinopsis"`
-		IdGenre    int    `json:"idGenre"`
-		IdPemain   int    `json:"idPemain"`
-		NamaPemain string `json:"namaPemain"`
-		Peran      string `json:"peran"`
-	}
+	db := db.ConnectDB()
+
 	body, _ := ioutil.ReadAll(r.Body)
 
-	var input Hasilinput
-	json.Unmarshal(body, &input)
+	var film models.Film
+	
+	json.Unmarshal(body, &film)
 
-	//db.Create(&film)
-	fmt.Println(input)
+	db.Debug().Create(&film)
 
-	response := models.FilmResponse{Status: 200, Data: input, Message: "Added Film"}
+	response := models.FilmResponse{Status: 200, Data: film, Message: "Added Film"}
 	result, err := json.Marshal(response)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	//db.Save(&film)
-
+	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(result)
@@ -150,6 +141,16 @@ func AddFilm(w http.ResponseWriter, r *http.Request) {
 
 //Mengubah data film sesuai id
 func UpdateFilmById(w http.ResponseWriter, r *http.Request) {
+	
+	type result struct {
+		IdFilm     int        `json:"idFilm"`
+		Judul      string     `json:"judul"`
+		TahunRilis string     `json:"tahunRilis"`
+		Sutradara  string     `json:"sutradara"`
+		Sinopsis   string     `json:"sinopsis"`
+		IdGenre    int        `json:"idGenre"`
+	}
+
 	db := db.ConnectDB()
 
 	body, _ := ioutil.ReadAll(r.Body)
@@ -157,45 +158,57 @@ func UpdateFilmById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idFilm := vars["id"]
 
+	var hasil result
 	var filmUpdates models.Film
+	
 	json.Unmarshal(body, &filmUpdates)
-
+	
 	var film models.Film
-	db.Find(&film, idFilm)
-	db.Model(&film).Updates(filmUpdates)
 
-	response := models.FilmResponse{Status: 200, Data: film, Message: "Film Data Updated"}
-	result, err := json.Marshal(response)
+	query := db.Table("films").Select("id_film, judul, tahun_rilis, sutradara, sinopsis, id_genre").Where("id_film = ?", idFilm).Row()
+	db.Model(&film).Where("id_film = ?", idFilm).Updates(filmUpdates)
 
+	query.Scan(&hasil.IdFilm, &hasil.Judul, &hasil.TahunRilis, &hasil.Sutradara, &hasil.Sinopsis, &hasil.IdGenre) 
+
+
+	var response models.FilmResponse
+	if hasil.IdFilm == 0 {
+		response = models.FilmResponse{Status: 404, Message: "Film Dak Ditemukan"}
+	} else {
+		db.Table("films").Select("id_film, judul, tahun_rilis, sutradara, sinopsis, id_genre").Where("id_film = ?", idFilm).Find(&hasil)
+		response = models.FilmResponse{Status: 200, Data: hasil, Message: "Film Data Updated"}
+	}
+
+	results, err := json.Marshal(response)
+	
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	db.Save(&film)
+	
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(result)
+	w.Write(results)
 
 }
 
 //Mengambil data film sesuai keyword yang diinputkan
 func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
 	type result struct {
-		IdFilm     int      `json:"idFilm"`
-		Judul      string   `json:"judul"`
-		TahunRilis string   `json:"tahunRilis"`
-		Sutradara  string   `json:"sutradara"`
-		Sinopsis   string   `json:"sinopsis"`
-		IdGenre    int      `json:"idGenre"`
-		JenisGenre string   `json:"JenisGenre"`
-		NamaPemain []string `json:"NamaPemain"`
+		IdFilm     int        `json:"idFilm"`
+		Judul      string     `json:"judul"`
+		TahunRilis string     `json:"tahunRilis"`
+		Sutradara  string     `json:"sutradara"`
+		Sinopsis   string     `json:"sinopsis"`
+		IdGenre    int        `json:"idGenre"`
+		JenisGenre string 	  `json:"JenisGenre"`
+		NamaPemain []string   `json:"NamaPemain"`
 	}
 	db := db.ConnectDB()
 
 	vars := mux.Vars(r)
 	keywordJudul := vars["keyword"]
-
+	
 	var hasil result
 	var hasils []result
 
@@ -208,7 +221,7 @@ func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
 		query_film.Scan(&hasil.IdFilm, &hasil.Judul, &hasil.TahunRilis, &hasil.Sutradara, &hasil.Sinopsis, &hasil.IdGenre, &hasil.JenisGenre)
 
 		query_pemain, _ := db.Debug().Table("pemains").Select("pemains.nama_pemain, list_pemains.peran").Joins("JOIN list_pemains ON pemains.id_pemain = list_pemains.id_pemain").Joins("JOIN films ON list_pemains.id_film = films.id_film").Where("films.id_film = ?", &hasil.IdFilm).Rows()
-
+	
 		for query_pemain.Next() {
 			var pemain string
 			var peranPemain string
@@ -221,9 +234,16 @@ func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
 		hasils = append(hasils, hasil)
 		hasil.NamaPemain = nil
 	}
+	//var results []byte
+	var response models.FilmResponse
+	//var err error
+	if len(hasil.Judul) == 0 {
+		response = models.FilmResponse{Status: 400, Message: "Data Not Found"}
+	} else {
+		response = models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
+	}
 
-	response := models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
-	results, err := json.Marshal(response)
+	results, err := json.Marshal(response)	
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
