@@ -13,13 +13,13 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/loginadmin", controllers.LoginAdmin).Methods("GET")
 	router.HandleFunc("/regis", controllers.Register).Methods("POST")
-	router.HandleFunc("/getuserbyemail", controllers.GetMemberBaseOnEmail).Methods("GET")
+	router.HandleFunc("/getuserbyemail", controllers.Authenticate(controllers.GetMemberBaseOnEmail, 0)).Methods("GET")
 	router.HandleFunc("/logoutbroo", controllers.SignOut).Methods("GET")
 
 	// Nealson
-	router.HandleFunc("/suspend/{id}", controllers.SuspendMember).Methods("PUT")
-	router.HandleFunc("/addfilm", controllers.AddFilm).Methods("POST")
-	router.HandleFunc("/updatefilmbyid/{id}", controllers.UpdateFilmById).Methods("PUT")
+	router.HandleFunc("/suspend/{id}", controllers.Authenticate(controllers.SuspendMember, 0)).Methods("PUT")
+	router.HandleFunc("/addfilm", controllers.Authenticate(controllers.AddFilm, 0)).Methods("POST")
+	router.HandleFunc("/updatefilmbyid/{id}", controllers.Authenticate(controllers.UpdateFilmById, 0)).Methods("PUT")
 	router.HandleFunc("/getfilmbykeyword/{keyword}", controllers.GetFilmByKeyword).Methods("GET")
 
 	// Zefa
