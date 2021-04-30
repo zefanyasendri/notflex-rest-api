@@ -477,23 +477,39 @@ func GetWatchHistory(w http.ResponseWriter, r *http.Request) {
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
+	type hasil struct {
+		NamaLengkap  string `json:"namaLengkap"`
+		TanggalLahir string `json:"tanggalLahir"`
+		JenisKelamin string `json:"jenisKelamin"`
+		AsalNegara   string `json:"asalNegara"`
+		Email        string `json:"email"`
+		Password     string `json:"password"`
+	}
+
 	db := db.ConnectDB()
 
 	body, _ := ioutil.ReadAll(r.Body)
 
 	var newmember models.Member
-	json.Unmarshal(body, &newmember)
+	var data hasil
 	var emailscan string
-	query, _ := db.Debug().Table("members").Select("email").Where("email = ?", newmember.Email).Rows()
-	fmt.Println(newmember.Email)
-
+	json.Unmarshal(body, &data)
+	query, _ := db.Debug().Table("members").Select("email").Where("email = ?", data.Email).Rows()
+	fmt.Println(data.Email)
 	for query.Next() {
 		query.Scan(&emailscan)
 	}
+	newmember.NamaLengkap = data.NamaLengkap
+	newmember.TanggalLahir = data.TanggalLahir
+	newmember.JenisKelamin = data.JenisKelamin
+	newmember.AsalNegara = data.AsalNegara
+	newmember.Email = data.Email
+	newmember.StatusAkun = "AKTIF"
 	fmt.Println(emailscan)
 	if len(emailscan) == 0 {
+		newmember.Password, _ = HashPassword(data.Password)
 		db.Save(&newmember)
-		response := models.FilmResponse{Status: 200, Data: newmember, Message: "WELCOME ABOARD!!!"}
+		response := models.FilmResponse{Status: 200, Data: data, Message: "WELCOME ABOARD!!!"}
 		result, err := json.Marshal(response)
 
 		if err != nil {
