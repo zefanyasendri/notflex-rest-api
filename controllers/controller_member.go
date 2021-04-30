@@ -461,3 +461,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		w.Write(result)
 	}
 }
+
+func SignOut(w http.ResponseWriter, r *http.Request) {
+	resetUserToken(w)
+
+	var response models.MemberResponse
+	response.Status = 200
+	response.Message = "SignOut Success"
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}

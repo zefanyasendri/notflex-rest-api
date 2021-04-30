@@ -1,6 +1,7 @@
 package models
 
 type Member struct {
+
 	Person            `json:"person"`
 	IdMember          int         `json:"idMember" gorm:"primaryKey"`
 	NamaLengkap       string      `json:"namaLengkap"`
