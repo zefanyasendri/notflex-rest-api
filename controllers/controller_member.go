@@ -13,6 +13,66 @@ import (
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
 
+// 1 - User Registration
+func Register(w http.ResponseWriter, r *http.Request) {
+	type hasil struct {
+		NamaLengkap  string `json:"namaLengkap"`
+		TanggalLahir string `json:"tanggalLahir"`
+		JenisKelamin string `json:"jenisKelamin"`
+		AsalNegara   string `json:"asalNegara"`
+		Email        string `json:"email"`
+		Password     string `json:"password"`
+	}
+
+	db := db.ConnectDB()
+
+	body, _ := ioutil.ReadAll(r.Body)
+
+	var newmember models.Member
+	var data hasil
+	var emailscan string
+	json.Unmarshal(body, &data)
+	query, _ := db.Debug().Table("members").Select("email").Where("email = ?", data.Email).Rows()
+	fmt.Println(data.Email)
+	for query.Next() {
+		query.Scan(&emailscan)
+	}
+	newmember.NamaLengkap = data.NamaLengkap
+	newmember.TanggalLahir = data.TanggalLahir
+	newmember.JenisKelamin = data.JenisKelamin
+	newmember.AsalNegara = data.AsalNegara
+	newmember.Email = data.Email
+	newmember.StatusAkun = "AKTIF"
+	fmt.Println(emailscan)
+	if len(emailscan) == 0 {
+		newmember.Password, _ = HashPassword(data.Password)
+		db.Save(&newmember)
+		response := models.FilmResponse{Status: 200, Data: data, Message: "WELCOME ABOARD!!!"}
+		result, err := json.Marshal(response)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(result)
+		return
+	} else {
+		response := models.FilmResponse{Status: 400, Message: "Email telah diambil alih"}
+		result, err := json.Marshal(response)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(result)
+	}
+}
+
+// 2 - User Sign-in dan Sign-Out
 func Login(w http.ResponseWriter, r *http.Request) {
 	var response models.Response
 	email := r.FormValue("email")
@@ -56,6 +116,18 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Message: "Login success. Welcome " + email + "!",
 		Data:    nil,
 	}
+	json.NewEncoder(w).Encode(response)
+}
+
+// 2 - User Sign-in dan Sign-Out
+func SignOut(w http.ResponseWriter, r *http.Request) {
+	resetUserToken(w)
+
+	var response models.Response
+	response.Status = 200
+	response.Message = "SignOut Success"
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -104,6 +176,7 @@ func CheckLogin(email, password string) (int, error) {
 	return id_member, nil
 }
 
+// 3 - Update Profile
 func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	//Validate from cookies
 	status, id_member, err := GetIDFromCookies(r)
@@ -145,92 +218,7 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	w.Write(result)
 }
 
-func WatchFilm(w http.ResponseWriter, r *http.Request) {
-	//Validate from cookies
-	status, userID, err := GetIDFromCookies(r)
-	if !status && err != nil {
-		sendErrorResponse(w, "Something went wrong. Please try again")
-		return
-	}
-
-	if !CheckSubscribe(userID) {
-		sendErrorResponse(w, "Looks like you're not subscribed yet.")
-		return
-	}
-
-	type FilmHeader struct {
-		Judul       string   `json:"judul"`
-		TahunRilis  string   `json:"tahunRilis"`
-		Sutradara   string   `json:"sutradara"`
-		PemainUtama []string `json:"pemainutama"`
-		Genre       string   `json:"genre"`
-		Sinopsis    string   `json:"sinopsis"`
-	}
-	var filmHeader FilmHeader
-	db := db.ConnectDB()
-	vars := mux.Vars(r)
-
-	film_id, err := strconv.Atoi(vars["id"])
-
-	if err != nil {
-		sendErrorResponse(w, "Something went wrong. Please try again")
-		return
-	}
-
-	//Get from film
-	res := db.Where("id_film = ?", film_id).Find(&models.Film{})
-	errRes := res.Error
-
-	//If query error
-	w.Header().Set("Content-Type", "application/json")
-	if errRes != nil {
-		sendErrorResponse(w, "Something went wrong. Please try again")
-		return
-	}
-	//If there are no rows
-	if res.RowsAffected == 0 {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(models.Response{
-			Status:  http.StatusInternalServerError,
-			Message: "There are no films available",
-			Data:    nil,
-		})
-		return
-	}
-	//Insert to history
-	rows, err := db.Table("pemains a").Select("c.judul, c.tahun_rilis, c.sutradara, a.nama_pemain, d.jenis_genre, c.sinopsis").Joins("join list_pemains b on a.id_pemain = b.id_pemain").Joins("join films c on b.id_film = c.id_film").Joins("join genres d on c.id_genre = d.id_genre").Where("c.id_film = ? and b.peran = ?", film_id, "Pemain Utama").Rows()
-	if err != nil {
-		sendErrorResponse(w, "Something went wrong. Please try again")
-		return
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var pemain string
-		rows.Scan(&filmHeader.Judul, &filmHeader.TahunRilis, &filmHeader.Sutradara, &pemain, &filmHeader.Genre, &filmHeader.Sinopsis)
-		filmHeader.PemainUtama = append(filmHeader.PemainUtama, pemain)
-	}
-
-	//Insert to history and check if there is an error
-	if err := db.Create(&models.History{
-		IdMember:      userID,
-		IdFilm:        film_id,
-		TanggalNonton: time.Now().Format("02/01/2006"),
-	}).Error; err != nil {
-		sendErrorResponse(w, "Something went wrong. Please try again")
-		return
-	}
-
-	//Output JSON
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(models.Response{
-		Status:  http.StatusOK,
-		Message: "Enjoy the movie!",
-		Data:    filmHeader,
-	})
-
-}
-
-//Mengambil data film sesuai keywords yang diinputkan
+// 4 - Mencari data film sesuai keywords yang diinputkan
 func GetFilmByKeywords(w http.ResponseWriter, r *http.Request) {
 	//Validate from cookies
 	status, _, err := GetIDFromCookies(r)
@@ -296,6 +284,7 @@ func GetFilmByKeywords(w http.ResponseWriter, r *http.Request) {
 	w.Write(results)
 }
 
+// 5 - Berlangganan
 func Subscribe(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -389,6 +378,7 @@ func Subscribe(w http.ResponseWriter, r *http.Request) {
 	sendSuccessResponse(w, "Your subscription has been purchased until "+time.Now().AddDate(0, 0, 30).Format("02 January, 2006")+". Enjoy your Notflex!")
 }
 
+// 6 - Berhenti Berlangganan
 func Unsubscribe(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -418,21 +408,93 @@ func Unsubscribe(w http.ResponseWriter, r *http.Request) {
 	sendSuccessResponse(w, "Unsubscribed! Sad to see you go.")
 }
 
-func CheckSubscribe(id_member int) bool {
-	var status string
+// 7 - "Menonton" Film
+func WatchFilm(w http.ResponseWriter, r *http.Request) {
+	//Validate from cookies
+	status, userID, err := GetIDFromCookies(r)
+	if !status && err != nil {
+		sendErrorResponse(w, "Something went wrong. Please try again")
+		return
+	}
+
+	if !CheckSubscribe(userID) {
+		sendErrorResponse(w, "Looks like you're not subscribed yet.")
+		return
+	}
+
+	type FilmHeader struct {
+		Judul       string   `json:"judul"`
+		TahunRilis  string   `json:"tahunRilis"`
+		Sutradara   string   `json:"sutradara"`
+		PemainUtama []string `json:"pemainutama"`
+		Genre       string   `json:"genre"`
+		Sinopsis    string   `json:"sinopsis"`
+	}
+	var filmHeader FilmHeader
 	db := db.ConnectDB()
+	vars := mux.Vars(r)
 
-	row := db.Table("members").Where("id_member = ?", id_member).Select("status_akun").Find(&status)
-	if err := row.Error; err != nil {
-		return false
+	film_id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		sendErrorResponse(w, "Something went wrong. Please try again")
+		return
 	}
 
-	if status == "Subscribed - Basic" || status == "Subscribed - Premium" {
-		return true
+	//Get from film
+	res := db.Where("id_film = ?", film_id).Find(&models.Film{})
+	errRes := res.Error
+
+	//If query error
+	w.Header().Set("Content-Type", "application/json")
+	if errRes != nil {
+		sendErrorResponse(w, "Something went wrong. Please try again")
+		return
 	}
-	return false
+	//If there are no rows
+	if res.RowsAffected == 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.Response{
+			Status:  http.StatusInternalServerError,
+			Message: "There are no films available",
+			Data:    nil,
+		})
+		return
+	}
+	//Insert to history
+	rows, err := db.Table("pemains a").Select("c.judul, c.tahun_rilis, c.sutradara, a.nama_pemain, d.jenis_genre, c.sinopsis").Joins("join list_pemains b on a.id_pemain = b.id_pemain").Joins("join films c on b.id_film = c.id_film").Joins("join genres d on c.id_genre = d.id_genre").Where("c.id_film = ?", film_id).Rows()
+	if err != nil {
+		sendErrorResponse(w, "Something went wrong. Please try again")
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var pemain string
+		rows.Scan(&filmHeader.Judul, &filmHeader.TahunRilis, &filmHeader.Sutradara, &pemain, &filmHeader.Genre, &filmHeader.Sinopsis)
+		filmHeader.PemainUtama = append(filmHeader.PemainUtama, pemain)
+	}
+
+	//Insert to history and check if there is an error
+	if err := db.Create(&models.History{
+		IdMember:      userID,
+		IdFilm:        film_id,
+		TanggalNonton: time.Now().Format("02/01/2006"),
+	}).Error; err != nil {
+		sendErrorResponse(w, "Something went wrong. Please try again")
+		return
+	}
+
+	//Output JSON
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.Response{
+		Status:  http.StatusOK,
+		Message: "Enjoy the movie!",
+		Data:    filmHeader,
+	})
+
 }
 
+// 8 - Melihat Riwayat Film
 func GetWatchHistory(w http.ResponseWriter, r *http.Request) {
 	type Response struct {
 		Judul string    `json:"judul"`
@@ -476,71 +538,17 @@ func GetWatchHistory(w http.ResponseWriter, r *http.Request) {
 	w.Write(result)
 }
 
-func Register(w http.ResponseWriter, r *http.Request) {
-	type hasil struct {
-		NamaLengkap  string `json:"namaLengkap"`
-		TanggalLahir string `json:"tanggalLahir"`
-		JenisKelamin string `json:"jenisKelamin"`
-		AsalNegara   string `json:"asalNegara"`
-		Email        string `json:"email"`
-		Password     string `json:"password"`
-	}
-
+func CheckSubscribe(id_member int) bool {
+	var status string
 	db := db.ConnectDB()
 
-	body, _ := ioutil.ReadAll(r.Body)
-
-	var newmember models.Member
-	var data hasil
-	var emailscan string
-	json.Unmarshal(body, &data)
-	query, _ := db.Debug().Table("members").Select("email").Where("email = ?", data.Email).Rows()
-	fmt.Println(data.Email)
-	for query.Next() {
-		query.Scan(&emailscan)
+	row := db.Table("members").Where("id_member = ?", id_member).Select("status_akun").Find(&status)
+	if err := row.Error; err != nil {
+		return false
 	}
-	newmember.NamaLengkap = data.NamaLengkap
-	newmember.TanggalLahir = data.TanggalLahir
-	newmember.JenisKelamin = data.JenisKelamin
-	newmember.AsalNegara = data.AsalNegara
-	newmember.Email = data.Email
-	newmember.StatusAkun = "AKTIF"
-	fmt.Println(emailscan)
-	if len(emailscan) == 0 {
-		newmember.Password, _ = HashPassword(data.Password)
-		db.Save(&newmember)
-		response := models.FilmResponse{Status: 200, Data: data, Message: "WELCOME ABOARD!!!"}
-		result, err := json.Marshal(response)
 
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(result)
-		return
-	} else {
-		response := models.FilmResponse{Status: 400, Message: "Email telah diambil alih"}
-		result, err := json.Marshal(response)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(result)
+	if status == "Subscribed - Basic" || status == "Subscribed - Premium" {
+		return true
 	}
-}
-
-func SignOut(w http.ResponseWriter, r *http.Request) {
-	resetUserToken(w)
-
-	var response models.Response
-	response.Status = 200
-	response.Message = "SignOut Success"
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	return false
 }
