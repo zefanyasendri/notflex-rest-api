@@ -236,6 +236,16 @@ func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
 
 //Mengambil data film berdasarkan ID
 func GetFilmByID(w http.ResponseWriter, r *http.Request) {
+	//Validate from cookies
+	status, _, err := GetIDFromCookies(r)
+	if !status && err != nil {
+		json.NewEncoder(w).Encode(models.Response{
+			Status:  http.StatusInternalServerError,
+			Message: "Something went wrong please try again",
+			Data:    nil,
+		})
+		return
+	}
 	type result struct {
 		IdFilm     int      `json:"idFilm"`
 		Judul      string   `json:"judul"`
