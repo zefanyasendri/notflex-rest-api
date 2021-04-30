@@ -20,7 +20,7 @@ func main() {
 	router.HandleFunc("/suspend/{id}", controllers.Authenticate(controllers.SuspendMember, 0)).Methods("PUT")
 	router.HandleFunc("/addfilm", controllers.Authenticate(controllers.AddFilm, 0)).Methods("POST")
 	router.HandleFunc("/updatefilmbyid/{id}", controllers.Authenticate(controllers.UpdateFilmById, 0)).Methods("PUT")
-	router.HandleFunc("/getfilmbykeyword/{keyword}", controllers.GetFilmByKeyword).Methods("GET")
+	router.HandleFunc("/getfilmbykeyword/{keyword}", controllers.Authenticate(controllers.GetFilmByKeyword, 0)).Methods("GET")
 
 	// Zefa
 	router.HandleFunc("/updateprofile", controllers.Authenticate(controllers.UpdateProfile, 1)).Methods("PUT")
