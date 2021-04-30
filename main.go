@@ -19,12 +19,12 @@ func main() {
 	router.HandleFunc("/suspend/{id}", controllers.SuspendMember).Methods("PUT")
 	router.HandleFunc("/addfilm", controllers.AddFilm).Methods("POST")
 	router.HandleFunc("/updatefilmbyid/{id}", controllers.UpdateFilmById).Methods("PUT")
-	//router.HandleFunc("/getfilmbykeyword/{keyword}", controllers.GetFilmByKeyword).Methods("GET")
+	router.HandleFunc("/getfilmbykeyword/{keyword}", controllers.GetFilmByKeyword).Methods("GET")
 
 	// Zefa
-	router.HandleFunc("/updateprofile/{id}", controllers.UpdateProfile).Methods("PUT")
+	router.HandleFunc("/updateprofile", controllers.Authenticate(controllers.UpdateProfile, 1)).Methods("PUT")
 	router.HandleFunc("/getfilmbyid/{id}", controllers.GetFilmByID).Methods("GET")
-	router.HandleFunc("/getfilmbykeywords/{keywords}", controllers.GetFilmByKeywords).Methods("GET")
+	router.HandleFunc("/getfilmbykeywords/{keywords}", controllers.Authenticate(controllers.GetFilmByKeywords, 1)).Methods("GET")
 	router.HandleFunc("/getwatchhistory", controllers.Authenticate(controllers.GetWatchHistory, 1)).Methods("GET")
 
 	//Hilbert
