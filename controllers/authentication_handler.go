@@ -1,13 +1,11 @@
 package controllers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
 
 var jwtKey = []byte("bebasapasaja")
@@ -99,10 +97,19 @@ func validateTokenFromCookies(r *http.Request) (bool, string, string, int, int) 
 	return false, "", "", -1, -1
 }
 
-func sendUnAuthorizedResponse(w http.ResponseWriter) {
-	var response models.MemberResponse
-	response.Status = 401
-	response.Message = "Unauthorized Access"
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+func GetIDFromCookies(r *http.Request) (bool, int, error) {
+	cookie, err := r.Cookie(tokenName)
+	if err != nil {
+		return false, -1, err
+	}
+
+	accessToken := cookie.Value
+	accessClaims := &Claims{}
+	parsedToken, err := jwt.ParseWithClaims(accessToken, accessClaims, func(accessToken *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil && !parsedToken.Valid {
+		return false, -1, err
+	}
+	return true, accessClaims.UserID, nil
 }
