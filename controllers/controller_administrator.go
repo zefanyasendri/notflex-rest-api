@@ -94,23 +94,34 @@ func SuspendMember(w http.ResponseWriter, r *http.Request) {
 
 //Menambah film baru ke database
 func AddFilm(w http.ResponseWriter, r *http.Request) {
-	db := db.ConnectDB()
-
+	//db := db.ConnectDB()
+	type Hasilinput struct {
+		IdFilm     int    `json:"idFilm"`
+		Judul      string `json:"judul"`
+		TahunRilis string `json:"tahunRilis"`
+		Sutradara  string `json:"sutradara"`
+		Sinopsis   string `json:"sinopsis"`
+		IdGenre    int    `json:"idGenre"`
+		IdPemain   int    `json:"idPemain"`
+		NamaPemain string `json:"namaPemain"`
+		Peran      string `json:"peran"`
+	}
 	body, _ := ioutil.ReadAll(r.Body)
 
-	var film models.Film
-	json.Unmarshal(body, &film)
+	var input Hasilinput
+	json.Unmarshal(body, &input)
 
-	db.Create(&film)
+	//db.Create(&film)
+	fmt.Println(input)
 
-	response := models.FilmResponse{Status: 200, Data: film, Message: "Added Film"}
+	response := models.FilmResponse{Status: 200, Data: input, Message: "Added Film"}
 	result, err := json.Marshal(response)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	db.Save(&film)
+	//db.Save(&film)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -248,7 +259,7 @@ func GetFilmByID(w http.ResponseWriter, r *http.Request) {
 
 	response := models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
 	results, err := json.Marshal(response)
-
+  
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
