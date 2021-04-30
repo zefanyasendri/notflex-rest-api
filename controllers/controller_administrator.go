@@ -11,6 +11,26 @@ import (
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
 
+func LoginAdmin(w http.ResponseWriter, r *http.Request) {
+	var response models.Response
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+
+	w.Header().Set("Content-Type", "application/json")
+	if email == "admin" && password == "12345" {
+		generateToken(w, email, password, 0, 0)
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.Response{Status: http.StatusInternalServerError, Message: "Login Failed"})
+		return
+	}
+	response = models.Response{
+		Status:  http.StatusOK,
+		Message: "Login success. Welcome " + email + "!",
+		Data:    nil,
+	}
+	json.NewEncoder(w).Encode(response)
+}
 func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 
 	type result struct {
@@ -259,7 +279,7 @@ func GetFilmByID(w http.ResponseWriter, r *http.Request) {
 
 	response := models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
 	results, err := json.Marshal(response)
-  
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

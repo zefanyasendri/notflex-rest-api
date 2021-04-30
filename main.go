@@ -11,6 +11,7 @@ import (
 
 func main() {
 	router := mux.NewRouter()
+	router.HandleFunc("/loginadmin", controllers.LoginAdmin).Methods("GET")
 	router.HandleFunc("/regis", controllers.Register).Methods("POST")
 	router.HandleFunc("/getuserbyemail", controllers.GetMemberBaseOnEmail).Methods("GET")
 	router.HandleFunc("/logoutbroo", controllers.SignOut).Methods("GET")
