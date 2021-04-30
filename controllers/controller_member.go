@@ -465,7 +465,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 func SignOut(w http.ResponseWriter, r *http.Request) {
 	resetUserToken(w)
 
-	var response models.MemberResponse
+	var response models.Response
 	response.Status = 200
 	response.Message = "SignOut Success"
 

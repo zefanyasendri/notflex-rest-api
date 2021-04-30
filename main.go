@@ -20,7 +20,7 @@ func main() {
 	router.HandleFunc("/suspend/{id}", controllers.SuspendMember).Methods("PUT")
 	router.HandleFunc("/addfilm", controllers.AddFilm).Methods("POST")
 	router.HandleFunc("/updatefilmbyid/{id}", controllers.UpdateFilmById).Methods("PUT")
-	//router.HandleFunc("/getfilmbykeyword/{keyword}", controllers.GetFilmByKeyword).Methods("GET")
+	router.HandleFunc("/getfilmbykeyword/{keyword}", controllers.GetFilmByKeyword).Methods("GET")
 
 	// Zefa
 	router.HandleFunc("/updateprofile/{id}", controllers.UpdateProfile).Methods("PUT")
