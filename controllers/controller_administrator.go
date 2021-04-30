@@ -4,38 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/db"
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
-
-func LoginAdmin(w http.ResponseWriter, r *http.Request) {
-	db := db.ConnectDB()
-
-	pass := r.URL.Query()["password"]
-	email := r.URL.Query()["email"]
-
-	var person models.Member
-	var response models.MemberResponse
-
-	if err := db.Where("email = ? and password = ?", email[0], pass[0]).First(&person).Error; err != nil {
-		log.Print(err)
-		response.Status = 400
-		response.Message = "Error"
-		return
-	}
-
-	db.Find(&person)
-	generateToken(w, person.Email, person.Password, 0, 0)
-	response.Status = 200
-	response.Message = "Success Login <WELCOME>"
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
 
 func GetMemberBaseOnEmail(w http.ResponseWriter, r *http.Request) {
 
@@ -121,23 +95,34 @@ func SuspendMember(w http.ResponseWriter, r *http.Request) {
 
 //Menambah film baru ke database
 func AddFilm(w http.ResponseWriter, r *http.Request) {
-	db := db.ConnectDB()
-
+	//db := db.ConnectDB()
+	type Hasilinput struct {
+		IdFilm     int    `json:"idFilm"`
+		Judul      string `json:"judul"`
+		TahunRilis string `json:"tahunRilis"`
+		Sutradara  string `json:"sutradara"`
+		Sinopsis   string `json:"sinopsis"`
+		IdGenre    int    `json:"idGenre"`
+		IdPemain   int    `json:"idPemain"`
+		NamaPemain string `json:"namaPemain"`
+		Peran      string `json:"peran"`
+	}
 	body, _ := ioutil.ReadAll(r.Body)
 
-	var film models.Film
-	json.Unmarshal(body, &film)
+	var input Hasilinput
+	json.Unmarshal(body, &input)
 
-	db.Create(&film)
+	//db.Create(&film)
+	fmt.Println(input)
 
-	response := models.FilmResponse{Status: 200, Data: film, Message: "Added Film"}
+	response := models.FilmResponse{Status: 200, Data: input, Message: "Added Film"}
 	result, err := json.Marshal(response)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	db.Save(&film)
+	//db.Save(&film)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

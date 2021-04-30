@@ -344,14 +344,13 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println(emailscan)
 	if len(emailscan) == 0 {
+		db.Save(&newmember)
 		response := models.FilmResponse{Status: 200, Data: newmember, Message: "WELCOME ABOARD!!!"}
 		result, err := json.Marshal(response)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-
-		db.Save(&newmember)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -369,4 +368,15 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write(result)
 	}
+}
+
+func SignOut(w http.ResponseWriter, r *http.Request) {
+	resetUserToken(w)
+
+	var response models.MemberResponse
+	response.Status = 200
+	response.Message = "SignOut Success"
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
