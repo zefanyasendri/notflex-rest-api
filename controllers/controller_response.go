@@ -7,6 +7,7 @@ import (
 	"github.com/zefanyasendri/TugasKelompok-REST-API-NotFlex/models"
 )
 
+// UnAuthorized Response
 func sendUnAuthorizedResponse(w http.ResponseWriter) {
 	var response models.Response
 	response.Status = http.StatusUnauthorized
@@ -15,6 +16,7 @@ func sendUnAuthorizedResponse(w http.ResponseWriter) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// Success Response
 func sendSuccessResponse(w http.ResponseWriter, msg string) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(models.Response{
@@ -24,6 +26,7 @@ func sendSuccessResponse(w http.ResponseWriter, msg string) {
 	})
 }
 
+// Error Response
 func sendErrorResponse(w http.ResponseWriter, msg string) {
 	w.WriteHeader(http.StatusInternalServerError)
 	json.NewEncoder(w).Encode(models.Response{
