@@ -163,20 +163,20 @@ func UpdateFilmById(w http.ResponseWriter, r *http.Request) {
 //Mengambil data film sesuai keyword yang diinputkan
 func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
 	type result struct {
-		IdFilm     int        `json:"idFilm"`
-		Judul      string     `json:"judul"`
-		TahunRilis string     `json:"tahunRilis"`
-		Sutradara  string     `json:"sutradara"`
-		Sinopsis   string     `json:"sinopsis"`
-		IdGenre    int        `json:"idGenre"`
-		JenisGenre string 	  `json:"JenisGenre"`
-		NamaPemain []string   `json:"NamaPemain"`
+		IdFilm     int      `json:"idFilm"`
+		Judul      string   `json:"judul"`
+		TahunRilis string   `json:"tahunRilis"`
+		Sutradara  string   `json:"sutradara"`
+		Sinopsis   string   `json:"sinopsis"`
+		IdGenre    int      `json:"idGenre"`
+		JenisGenre string   `json:"JenisGenre"`
+		NamaPemain []string `json:"NamaPemain"`
 	}
-	db := database.ConnectDB()
+	db := db.ConnectDB()
 
 	vars := mux.Vars(r)
 	keywordJudul := vars["keyword"]
-	
+
 	var hasil result
 	var hasils []result
 
@@ -205,7 +205,6 @@ func GetFilmByKeyword(w http.ResponseWriter, r *http.Request) {
 
 	response := models.FilmResponse{Status: 200, Data: hasils, Message: "Data Found"}
 	results, err := json.Marshal(response)
-	
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
