@@ -11,10 +11,12 @@ import (
 
 func main() {
 	router := mux.NewRouter()
+
+	// Hans
 	router.HandleFunc("/loginadmin", controllers.LoginAdmin).Methods("GET")
 	router.HandleFunc("/regis", controllers.Register).Methods("POST")
 	router.HandleFunc("/getuserbyemail", controllers.Authenticate(controllers.GetMemberBaseOnEmail, 0)).Methods("GET")
-	router.HandleFunc("/logoutbroo", controllers.SignOut).Methods("GET")
+	router.HandleFunc("/logout", controllers.SignOut).Methods("GET")
 
 	// Nealson
 	router.HandleFunc("/suspend/{id}", controllers.Authenticate(controllers.SuspendMember, 0)).Methods("PUT")
@@ -22,7 +24,7 @@ func main() {
 	router.HandleFunc("/updatefilmbyid/{id}", controllers.Authenticate(controllers.UpdateFilmById, 0)).Methods("PUT")
 	router.HandleFunc("/getfilmbykeyword/{keyword}", controllers.Authenticate(controllers.GetFilmByKeyword, 0)).Methods("GET")
 
-	// Zefa
+	// Zefanya
 	router.HandleFunc("/updateprofile", controllers.Authenticate(controllers.UpdateProfile, 1)).Methods("PUT")
 	router.HandleFunc("/getfilmbyid/{id}", controllers.Authenticate(controllers.GetFilmByID, 0)).Methods("GET")
 	router.HandleFunc("/getfilmbykeywords/{keywords}", controllers.Authenticate(controllers.GetFilmByKeywords, 1)).Methods("GET")
